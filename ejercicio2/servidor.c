@@ -9,29 +9,49 @@ pthread_cond_t cond_mensaje = PTHREAD_COND_INITIALIZER;
 int mensaje_no_copiado = 1;
 
 int main() {
-    mqd_t q_server;
-    struct petition pet;
-    struct mq_attr attr;
     pthread_t t_id;
     pthread_attr_t t_attr;
+    struct sockaddr_in server_addr, client_addr;
+    socklen_t size;
+    int socket_fd, new_socket_fd;
+    int val = 1;
 
-    attr.mq_maxmsg = 10;
-    attr.mq_msgsize = sizeof(struct petition);
-    q_server = mq_open("/COLA_SERVIDOR", O_CREAT | O_RDONLY, 0700, &attr);
-    if (q_server == -1) {
-        perror("Error opening server queue on server.");
+    if ((socket_fd = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
+        perror("Error creating socket on server.");
         exit(1);
     }
 
+    if (setsockopt(socket_fd, SOL_SOCKET, SO_REUSEADDR, (char *)&val, sizeof(int)) == -1) {
+        perror("Error setting socket options on server.");
+        exit(1);
+    }
+
+    bzero((char *) &server_addr, sizeof(server_addr));
+    server_addr.sin_family = AF_INET;
+    server_addr.sin_port = htons(8080);
+    server_addr.sin_addr.s_addr = INADDR_ANY;
+
+    if (bind(socket_fd, (struct sockaddr *) &server_addr, sizeof(server_addr)) == -1) {
+        perror("Error binding socket on server.");
+        exit(1);
+    }
+
+    if (listen(socket_fd, SOMAXCONN) == -1) {
+        perror("Error listening on server.");
+        exit(1);
+    }
+    
+    size = sizeof(client_addr);
     while (1) {
-        if (mq_receive(q_server, (char *) &pet, sizeof(struct petition), 0) == -1) {
-            perror("Error receiving petition on server.");
+        pthread_attr_init(&t_attr);
+        pthread_attr_setdetachstate(&t_attr, PTHREAD_CREATE_DETACHED);
+
+        if ((new_socket_fd = accept(socket_fd, (struct sockaddr *) &client_addr, (socklen_t *)&size)) == -1) {
+            perror("Error accepting connection on server.");
             exit(1);
         }
         
-        pthread_attr_init(&t_attr);
-        pthread_attr_setdetachstate(&t_attr, PTHREAD_CREATE_DETACHED);
-        if (pthread_create(&t_id, &t_attr, (void *)treat_message, (void *) &pet) == 0) {
+        if (pthread_create(&t_id, &t_attr, (void *)treat_message, (void *)&new_socket_fd) == 0) {
             pthread_mutex_lock(&mutex_mensaje);
             while (mensaje_no_copiado) {
                 pthread_cond_wait(&cond_mensaje, &mutex_mensaje);
@@ -43,15 +63,14 @@ int main() {
             exit(1);
         }
     }
+
+    close(socket_fd);
+    return 0;
 }
 
-void treat_message(void *mess) {
-    struct petition message;
-    struct result res;
-    mqd_t q_client;
-
+void treat_message(void *new_socket_fd) {
     pthread_mutex_lock(&mutex_mensaje);
-    message = *((struct petition *) mess);
+    int socket_fd = *((int *) new_socket_fd);
     mensaje_no_copiado = 0;
     pthread_cond_signal(&cond_mensaje);
     pthread_mutex_unlock(&mutex_mensaje);
@@ -116,17 +135,6 @@ void treat_message(void *mess) {
             break;
     }
 
-    q_client = mq_open(message.q_name, O_WRONLY);
-    if (q_client == -1) {
-        perror("Error opening client queue on server.");
-        exit(1);
-    }
-
-    if (mq_send(q_client, (char *) &res, sizeof(struct result), 0) == -1) {
-        perror("Error sending result from server.");
-        exit(1);
-    }
-    mq_close(q_client);
-
+    close(socket_fd);
     pthread_exit(0);
 }

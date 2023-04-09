@@ -18,6 +18,7 @@ int main(int argc, char *argv[]) {
         printf("Connection enabled.\n");
     } else {
         printf("Connection not enabled.\n");
+        exit(1);
     }
     printf("These are the operations you can use:\n");
     printf("init - 0\n");
@@ -129,5 +130,5 @@ int main(int argc, char *argv[]) {
     }
 
     disable_connection();
-    return 0;
+    exit(0);
 }
