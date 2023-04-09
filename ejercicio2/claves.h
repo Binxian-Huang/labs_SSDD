@@ -18,6 +18,10 @@ struct result {
     char q_name[MAXSIZE];
 };
 
+int enable_connection();
+
+int disable_connection();
+
 int init();
 
 int set_value(int key, char *value1, int value2, double value3);
