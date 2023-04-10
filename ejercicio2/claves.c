@@ -106,8 +106,8 @@ ssize_t readLine(int socket_fd, char *buffer, size_t size) {
 
 int init() {            // function that sends the message of the init operation to the server
     char buffer[256];
-    pet.operation = 0;
-    sprintf(buffer, "%d", pet.operation);
+    int operation_code = 0;
+    sprintf(buffer, "%d", operation_code);
     sendMessage(socket_fd, buffer, strlen(buffer)+1);
 
     readLine(socket_fd, buffer, 256);
@@ -117,12 +117,19 @@ int init() {            // function that sends the message of the init operation
 
 int set_value(int key, char *value1, int value2, double value3) {           // function that sends the message of the set_value operation to the server
     char buffer[256];
-    pet.operation = 1;                                                      
-    pet.key = key;                                                          // set values of the tuple to save in the struct pet
-    strcpy(pet.value1, value1);                                             
-    pet.value2 = value2;                                                    
-    pet.value3 = value3;                                                   
+    int operation_code = 1;    
+    sprintf(buffer, "%d", operation_code);
+    sendMessage(socket_fd, buffer, strlen(buffer)+1);
+    sprintf(buffer, "%d", key);
+    sendMessage(socket_fd, buffer, strlen(buffer)+1);
+    sendMessage(socket_fd, value1, strlen(value1)+1);
+    sprintf(buffer, "%d", value2);
+    sendMessage(socket_fd, buffer, strlen(buffer)+1);
+    sprintf(buffer, "%f", value3);
+    sendMessage(socket_fd, buffer, strlen(buffer)+1);                                                  
 
+    readLine(socket_fd, buffer, 256);
+    res.result = atoi(buffer);
     if (res.result == 1) {
         return 1;
     } else {
@@ -132,14 +139,18 @@ int set_value(int key, char *value1, int value2, double value3) {           // f
 
 int get_value(int key, char *value1, int *value2, double *value3) {         // function that sends the message of the get_value operation to the server
     char buffer[256];
-    pet.operation = 2;
-    pet.key = key;                                                          // set values of the tuple to save in the struct pet
+    int operation_code = 2;    
+    sprintf(buffer, "%d", operation_code);
+    sendMessage(socket_fd, buffer, strlen(buffer)+1);
+    sprintf(buffer, "%d", key);                                                       
 
-
-
-    strcpy(value1, res.value1);                                            // set values of the tuple to save in the struct res
-    *value2 = res.value2;
-    *value3 = res.value3;
+    readLine(socket_fd, buffer, 256);
+    res.result = atoi(buffer);
+    readLine(socket_fd, value1, 256);
+    readLine(socket_fd, buffer, 256);
+    *value2 = atoi(buffer);
+    readLine(socket_fd, buffer, 256);
+    *value3 = atof(buffer);
     if (res.result == 1) {
         return 1;
     } else {
@@ -149,12 +160,19 @@ int get_value(int key, char *value1, int *value2, double *value3) {         // f
 
 int modify_value(int key, char *value1, int value2, double value3) {        // function that sends the message of the modify_value operation to the server
     char buffer[256];
-    pet.operation = 3;
-    pet.key = key;
-    strcpy(pet.value1, value1);
-    pet.value2 = value2;
-    pet.value3 = value3;
+    int operation_code = 3;    
+    sprintf(buffer, "%d", operation_code);
+    sendMessage(socket_fd, buffer, strlen(buffer)+1);
+    sprintf(buffer, "%d", key);
+    sendMessage(socket_fd, buffer, strlen(buffer)+1);
+    sendMessage(socket_fd, value1, strlen(value1)+1);
+    sprintf(buffer, "%d", value2);
+    sendMessage(socket_fd, buffer, strlen(buffer)+1);
+    sprintf(buffer, "%f", value3);
+    sendMessage(socket_fd, buffer, strlen(buffer)+1);                                                  
 
+    readLine(socket_fd, buffer, 256);
+    res.result = atoi(buffer);
     if (res.result == 1) {
         return 1;
     } else {
@@ -164,9 +182,14 @@ int modify_value(int key, char *value1, int value2, double value3) {        // f
 
 int delete_key(int key) {                                        // function that sends the message of the delete_key operation to the server
     char buffer[256];
-    pet.operation = 4;
-    pet.key = key;
+    int operation_code = 4;    
+    sprintf(buffer, "%d", operation_code);
+    sendMessage(socket_fd, buffer, strlen(buffer)+1);
+    sprintf(buffer, "%d", key);
+    sendMessage(socket_fd, buffer, strlen(buffer)+1);                                             
 
+    readLine(socket_fd, buffer, 256);
+    res.result = atoi(buffer);
     if (res.result == 1) {
         return 1;
     } else {
@@ -176,9 +199,14 @@ int delete_key(int key) {                                        // function tha
 
 int exist(int key) {                                // function that sends the message of the exist operation to the server
     char buffer[256];
-    pet.operation = 5;
-    pet.key = key;
-
+    int operation_code = 5;    
+    sprintf(buffer, "%d", operation_code);
+    sendMessage(socket_fd, buffer, strlen(buffer)+1);
+    sprintf(buffer, "%d", key);
+    sendMessage(socket_fd, buffer, strlen(buffer)+1);
+    
+    readLine(socket_fd, buffer, 256);
+    res.result = atoi(buffer);
     if (res.result == 1) {
         return 1;
     } else {
@@ -188,14 +216,19 @@ int exist(int key) {                                // function that sends the m
 
 int copy_key(int key1, int key2) {                      // function that sends the message of the copy_key operation to the server
     char buffer[256];
-    pet.operation = 6;
-    pet.key = key1;
-    pet.key2 = key2;
-
+    int operation_code = 6;    
+    sprintf(buffer, "%d", operation_code);
+    sendMessage(socket_fd, buffer, strlen(buffer)+1);
+    sprintf(buffer, "%d", key1);
+    sendMessage(socket_fd, buffer, strlen(buffer)+1);
+    sprintf(buffer, "%d", key2);
+    sendMessage(socket_fd, buffer, strlen(buffer)+1);
+    
+    readLine(socket_fd, buffer, 256);
+    res.result = atoi(buffer);
     if (res.result == 1) {
         return 1;
     } else {
         return 0;
     }
 }
-

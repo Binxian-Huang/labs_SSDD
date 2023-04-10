@@ -149,51 +149,96 @@ void treat_message(void *new_socket_fd) {
             result = init();
             if (result == 0) {
                 res.result = 1;                     // if init ended correctly set result to 1
+                sprintf(buffer, "%d", res.result);
+                sendMessage(socket_fd, buffer, strlen(buffer)+1);
             }
-            sprintf(buffer, "%d", res.result);
-            sendMessage(socket_fd, buffer, strlen(buffer)+1);
             break;
         case 1:                                     // if operation == 1 call set_value()
+            readLine(socket_fd, buffer, 256);
+            pet.key = atoi(buffer);
+            readLine(socket_fd, &pet.value1, 256);
+            readLine(socket_fd, buffer, 256);
+            pet.value2 = atoi(buffer);
+            readLine(socket_fd, buffer, 256);
+            pet.value3 = atof(buffer);
+
             result = set_value(pet.key, pet.value1, pet.value2, pet.value3);
             if (result == 0) {
                 res.result = 1;                     // if set_value ended correctly set result to 1
+                sprintf(buffer, "%d", res.result);
+                sendMessage(socket_fd, buffer, strlen(buffer)+1);
             } else {
                 res.result = 0;
             }
             break;
         case 2:                                     // if operation == 2 call get_value()
+            readLine(socket_fd, buffer, 256);
+            pet.key = atoi(buffer);
+
             result = get_value(pet.key, res.value1, &res.value2, &res.value3);
             if (result == 0) {
                 res.result = 1;                     // if get_value ended correctly set result to 1
+                sprintf(buffer, "%d", res.result);
+                sendMessage(socket_fd, buffer, strlen(buffer)+1);
+                sendMessage(socket_fd, res.value1, strlen(res.value1)+1);
+                sprintf(buffer, "%d", res.value2);
+                sendMessage(socket_fd, buffer, strlen(buffer)+1);
+                sprintf(buffer, "%f", res.value3);
+                sendMessage(socket_fd, buffer, strlen(buffer)+1);
             } else {
                 res.result = 0;
             }
             break;
         case 3:                                     // if operation == 3 call modify_value()
+            readLine(socket_fd, buffer, 256);
+            pet.key = atoi(buffer);
+            readLine(socket_fd, &pet.value1, 256);
+            readLine(socket_fd, buffer, 256);
+            pet.value2 = atoi(buffer);
+            readLine(socket_fd, buffer, 256);
+            pet.value3 = atof(buffer);
+
             result = modify_value(pet.key, pet.value1, pet.value2, pet.value3);
             if (result == 0) {
                 res.result = 1;                     // if modify_value ended correctly set result to 1
+                sprintf(buffer, "%d", res.result);
+                sendMessage(socket_fd, buffer, strlen(buffer)+1);
             } else {
                 res.result = 0;
             }
             break;
-        case 4:                                     // if operation == 4 call delete_key()     
+        case 4:                                     // if operation == 4 call delete_key()
+            readLine(socket_fd, buffer, 256);
+            pet.key = atoi(buffer);
+
             result = delete_key(pet.key);
             if (result == 0) {                      // if delete_key ended correctly set result to 1
                 res.result = 1;
+                sprintf(buffer, "%d", res.result);
+                sendMessage(socket_fd, buffer, strlen(buffer)+1);
             } else {
                 res.result = 0;
             }
             break;
         case 5:                                     // if operation == 5 call exist()
+            readLine(socket_fd, buffer, 256);
+            pet.key = atoi(buffer);
+
             result = exist(pet.key);
             if (result == 1) {                      // if exist ended correctly set result to 1
                 res.result = 1;
+                sprintf(buffer, "%d", res.result);
+                sendMessage(socket_fd, buffer, strlen(buffer)+1);
             } else {
                 res.result = 0;
             }
             break;
         case 6:                                     // if operation == 6 call copy_key()
+            readLine(socket_fd, buffer, 256);
+            pet.key = atoi(buffer);
+            readLine(socket_fd, buffer, 256);
+            pet.key2 = atoi(buffer);
+
             result = copy_key(pet.key, pet.key2);
             if (result == 0) {                      // if copy_key ended correctly set result to 1
                 res.result = 1;

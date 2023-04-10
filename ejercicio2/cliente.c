@@ -42,6 +42,8 @@ int main(int argc, char *argv[]) {
                 res = init();
                 if (res == 0) {
                     printf("Initilization correct.\n");
+                } else {
+                    printf("An error ocurred while initilizing.\n");
                 }
             }
         }
@@ -50,7 +52,7 @@ int main(int argc, char *argv[]) {
             if (scanf("%d %d %c %lf", &pet.key, pet.value1, &pet.value2, &pet.value3) != 4) {  //  key value1 value2 value3
                 perror("Wrong number of arguments on set_value.\n");
             } else {
-                res = set_value(pet.key, &pet.value1, pet.value2, pet.value3)
+                res = set_value(pet.key, &pet.value1, pet.value2, pet.value3);
                 if (res == 1) {
                     printf("The value with key %d set correctly.\n", pet.key);
                 } else {
