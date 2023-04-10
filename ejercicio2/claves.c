@@ -15,8 +15,6 @@
 struct petition pet;
 struct result res;
 int socket_fd;
-char buffer[256];
-
 
 int enable_connection() {
     struct sockaddr_in server_addr;
@@ -107,19 +105,33 @@ ssize_t readLine(int socket_fd, char *buffer, size_t size) {
 }
 
 int init() {            // function that sends the message of the init operation to the server
+    char buffer[256];
+    pet.operation = 0;
+    sprintf(buffer, "%d", pet.operation);
+    sendMessage(socket_fd, buffer, strlen(buffer)+1);
 
+    readLine(socket_fd, buffer, 256);
+    res.result = atoi(buffer);
+    return 0;
 }
 
 int set_value(int key, char *value1, int value2, double value3) {           // function that sends the message of the set_value operation to the server
+    char buffer[256];
     pet.operation = 1;                                                      
     pet.key = key;                                                          // set values of the tuple to save in the struct pet
     strcpy(pet.value1, value1);                                             
     pet.value2 = value2;                                                    
     pet.value3 = value3;                                                   
 
+    if (res.result == 1) {
+        return 1;
+    } else {
+        return 0;
+    }
 }
 
 int get_value(int key, char *value1, int *value2, double *value3) {         // function that sends the message of the get_value operation to the server
+    char buffer[256];
     pet.operation = 2;
     pet.key = key;                                                          // set values of the tuple to save in the struct pet
 
@@ -128,34 +140,62 @@ int get_value(int key, char *value1, int *value2, double *value3) {         // f
     strcpy(value1, res.value1);                                            // set values of the tuple to save in the struct res
     *value2 = res.value2;
     *value3 = res.value3;
-    
+    if (res.result == 1) {
+        return 1;
+    } else {
+        return 0;
+    }
 }
 
 int modify_value(int key, char *value1, int value2, double value3) {        // function that sends the message of the modify_value operation to the server
+    char buffer[256];
     pet.operation = 3;
     pet.key = key;
     strcpy(pet.value1, value1);
     pet.value2 = value2;
     pet.value3 = value3;
 
+    if (res.result == 1) {
+        return 1;
+    } else {
+        return 0;
+    }
 }
 
 int delete_key(int key) {                                        // function that sends the message of the delete_key operation to the server
+    char buffer[256];
     pet.operation = 4;
     pet.key = key;
 
+    if (res.result == 1) {
+        return 1;
+    } else {
+        return 0;
+    }
 }
 
 int exist(int key) {                                // function that sends the message of the exist operation to the server
+    char buffer[256];
     pet.operation = 5;
     pet.key = key;
 
+    if (res.result == 1) {
+        return 1;
+    } else {
+        return 0;
+    }
 }
 
 int copy_key(int key1, int key2) {                      // function that sends the message of the copy_key operation to the server
+    char buffer[256];
     pet.operation = 6;
     pet.key = key1;
     pet.key2 = key2;
 
+    if (res.result == 1) {
+        return 1;
+    } else {
+        return 0;
+    }
 }
 

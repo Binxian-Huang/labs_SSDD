@@ -141,12 +141,17 @@ void treat_message(void *new_socket_fd) {
     int result;
     struct petition pet;
     struct result res;
+
+    readLine(socket_fd, buffer, 256);
+    pet.operation = atoi(buffer);
     switch (pet.operation) {
         case 0:                                     // if operation == 0 call init()
             result = init();
             if (result == 0) {
                 res.result = 1;                     // if init ended correctly set result to 1
             }
+            sprintf(buffer, "%d", res.result);
+            sendMessage(socket_fd, buffer, strlen(buffer)+1);
             break;
         case 1:                                     // if operation == 1 call set_value()
             result = set_value(pet.key, pet.value1, pet.value2, pet.value3);
