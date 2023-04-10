@@ -1,5 +1,3 @@
-#define MAXSIZE 256
-
 struct petition {
     int operation;
     int key;
@@ -7,7 +5,6 @@ struct petition {
     char value1[256];
     int value2;
     double value3;
-    char q_name[MAXSIZE];
 };
 
 struct result {
@@ -15,7 +12,6 @@ struct result {
     char value1[256];
     int value2;
     double value3;
-    char q_name[MAXSIZE];
 };
 
 int init();

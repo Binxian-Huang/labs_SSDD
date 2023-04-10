@@ -1,5 +1,3 @@
-#define MAXSIZE 256
-
 struct petition {
     int operation;
     int key;
@@ -7,7 +5,6 @@ struct petition {
     char value1[256];
     int value2;
     double value3;
-    char q_name[MAXSIZE];
 };
 
 struct result {
@@ -15,12 +12,15 @@ struct result {
     char value1[256];
     int value2;
     double value3;
-    char q_name[MAXSIZE];
 };
 
 int enable_connection();
 
 int disable_connection();
+
+int sendMessage(int socket_fd, char *buffer, int size);
+
+ssize_t readLine(int socket_fd, char *buffer, size_t size);
 
 int init();
 

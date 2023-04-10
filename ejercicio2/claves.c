@@ -15,6 +15,7 @@
 struct petition pet;
 struct result res;
 int socket_fd;
+char buffer[256];
 
 
 int enable_connection() {
@@ -42,6 +43,67 @@ int enable_connection() {
 int disable_connection() {
     close(socket_fd);
     return 0;
+}
+
+int sendMessage(int socket_fd, char *buffer, int size) {
+    int bytes_sent;
+    int bytes_left = size;
+
+    while ((bytes_sent >=0) && (bytes_left > 0)) {
+        bytes_sent = write(socket_fd, buffer, bytes_left);
+        bytes_left -= bytes_sent;
+        buffer += bytes_sent;
+    }
+
+    if (bytes_sent < 0) {
+        return -1;
+    } else {
+        return 0;
+    }
+}
+
+ssize_t readLine(int socket_fd, char *buffer, size_t size) {
+    ssize_t numRead;
+    size_t totRead;
+    char *buf;
+    char ch;
+
+    if (size <= 0 || buffer == NULL) {
+        errno = EINVAL;
+        return -1;
+    }
+
+    buf = buffer;
+    totRead = 0;
+
+    for (;;) {
+        numRead = read(socket_fd, &ch, 1);
+
+        if (numRead == -1) {
+            if (errno == EINTR) {
+                continue;
+            } else {
+                return -1;
+            }
+        } else if (numRead == 0) {
+            if (totRead == 0) {
+                return 0;
+            } else {
+                break;
+            }
+        } else {
+            if (ch == '\n') {
+                break;
+            }
+            if (ch == '\0') {
+                break;
+            }
+            if (totRead < size - 1) {
+                totRead++;
+                *buf++ = ch;
+            }
+        }
+    }
 }
 
 int init() {            // function that sends the message of the init operation to the server
