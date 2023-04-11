@@ -102,13 +102,11 @@ ssize_t readLine(int socket_fd, char *buffer, size_t size) {
         return -1;
     }
 
-    printf("After readLine on server.\n");
     buf = buffer;
     totRead = 0;
 
     for (;;) {
         numRead = read(socket_fd, &ch, 1);
-        printf("After read on server: %ld\n", numRead);
 
         if (numRead == -1) {
             if (errno == EINTR) {
@@ -136,7 +134,7 @@ ssize_t readLine(int socket_fd, char *buffer, size_t size) {
         }
     }
     *buf = '\0';
-    printf("totRead: %ld\n", totRead);
+    printf("Value: %c\n", *buf);
     return totRead;
 }
 
@@ -145,7 +143,6 @@ void treat_message(void *new_socket_fd) {
 
     pthread_mutex_lock(&mutex_mensaje);
     int socket_fd = *((int *) new_socket_fd);
-    printf("Socket_fd: %d, new_socket_fd: %d\n", socket_fd, *((int *) new_socket_fd));
     mensaje_no_copiado = 0;
     pthread_cond_signal(&cond_mensaje);
     pthread_mutex_unlock(&mutex_mensaje);
@@ -156,7 +153,7 @@ void treat_message(void *new_socket_fd) {
 
     readLine(socket_fd, buffer, 256);
     pet.operation = atoi(buffer);
-    printf("Operation code received on server: %d", pet.operation);
+    printf("Operation code received on server: %d\n", pet.operation);
     switch (pet.operation) {
         case 0:                                     // if operation == 0 call init()
             result = init();
