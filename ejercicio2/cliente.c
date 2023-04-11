@@ -53,6 +53,7 @@ int main(int argc, char *argv[]) {
             printf("Arguments for set_value: ");
             if (scanf("%d %s %d %lf", &pet.key, pet.value1, &pet.value2, &pet.value3) != 4) {  //  key value1 value2 value3
                 perror("Wrong number of arguments on set_value.\n");
+                break;
             } else {
                 res = set_value(pet.key, pet.value1, pet.value2, pet.value3);
                 if (res == 1) {
@@ -67,6 +68,7 @@ int main(int argc, char *argv[]) {
             printf("Arguments for get_value: ");
             if (scanf("%d", &pet.key) != 1) {  // key 
                 perror("Wrong number of arguments on get_value.\n");
+                break;
             } else {
                 res = get_value(pet.key, pet.value1, &pet.value2, &pet.value3);
                 if (res == 1) {
@@ -81,6 +83,7 @@ int main(int argc, char *argv[]) {
             printf("Arguments for modify_value: ");
             if (scanf("%d %s %d %lf", &pet.key, pet.value1, &pet.value2, &pet.value3) != 4) {  // key value1 value2 value3
                 perror("Wrong number of arguments on modify_value.\n");
+                break;
             } else {
                 res = modify_value(pet.key, pet.value1, pet.value2, pet.value3);
                 if (res == 1) {
@@ -95,6 +98,7 @@ int main(int argc, char *argv[]) {
             printf("Arguments for delete_key: ");
             if (scanf("%d", &pet.key) != 1) {  // key
                 perror("Wrong number of arguments on delete_key.\n");
+                break;
             } else {
                 res = delete_key(pet.key);
                 if (res == 1) {
@@ -109,6 +113,7 @@ int main(int argc, char *argv[]) {
             printf("Arguments for exist: ");
             if (scanf("%d", &pet.key) != 1) {  // key
                 perror("Wrong number of arguments on exist.\n");
+                break;
             } else {
                 res = exist(pet.key);
                 if (res == 1) {
@@ -123,6 +128,7 @@ int main(int argc, char *argv[]) {
             printf("Arguments for copy_key: ");
             if (scanf("%d %d", &pet.key, &pet.key2) != 2) {  // key1 key2
                 perror("Wrong number of arguments on copy_key.\n");
+                break;
             } else {
                 res = copy_key(pet.key, pet.key2);
                 if (res == 0) {
