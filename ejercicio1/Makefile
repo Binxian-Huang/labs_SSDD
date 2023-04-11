@@ -25,4 +25,4 @@ servidor: servidor.o impl.o
 # Tarea de limpieza del proyecto
 .PHONY: clean 
 clean:
-	rm -f $(BIN_FILES) *.o
+	rm -f $(BIN_FILES) *.o *.so

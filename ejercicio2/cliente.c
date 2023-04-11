@@ -32,11 +32,12 @@ int main(int argc, char *argv[]) {
 
     while (1)
     {
-        printf("Operation code and arguments: ", 0, 1, 2, 4);
+        printf("Operation code: ");
         scanf("%d", &pet.operation);
 
-        if (strcmp(pet.operation, "0") == 0) { // init
-            if (getchar() != "\n") {  //after operation code there is other values
+        if (pet.operation == 0) { // init
+            char last_char = getchar();
+            if (last_char != '\n') {  //after operation code there is other values
                 perror("Wrong number of arguments on init.\n");
             } else {
                 res = init();
@@ -48,11 +49,12 @@ int main(int argc, char *argv[]) {
             }
         }
 
-        if (strcmp(pet.operation, "1") == 0) { // set_value
-            if (scanf("%d %d %c %lf", &pet.key, pet.value1, &pet.value2, &pet.value3) != 4) {  //  key value1 value2 value3
+        if (pet.operation == 1) { // set_value
+            printf("Arguments for set_value: ");
+            if (scanf("%d %s %d %lf", &pet.key, pet.value1, &pet.value2, &pet.value3) != 4) {  //  key value1 value2 value3
                 perror("Wrong number of arguments on set_value.\n");
             } else {
-                res = set_value(pet.key, &pet.value1, pet.value2, pet.value3);
+                res = set_value(pet.key, pet.value1, pet.value2, pet.value3);
                 if (res == 1) {
                     printf("The value with key %d set correctly.\n", pet.key);
                 } else {
@@ -61,7 +63,8 @@ int main(int argc, char *argv[]) {
             }
         }
 
-        if (strcmp(pet.operation, "2") == 0) { // get_value
+        if (pet.operation == 2) { // get_value
+            printf("Arguments for get_value: ");
             if (scanf("%d", &pet.key) != 1) {  // key 
                 perror("Wrong number of arguments on get_value.\n");
             } else {
@@ -74,11 +77,12 @@ int main(int argc, char *argv[]) {
             }
         }
 
-        if (strcmp(pet.operation, "3") == 0) { // modify_value
-            if (scanf("%d %d %c %lf", &pet.key, pet.value1, &pet.value2, &pet.value3) != 4) {  // key value1 value2 value3
+        if (pet.operation == 3) { // modify_value
+            printf("Arguments for modify_value: ");
+            if (scanf("%d %s %d %lf", &pet.key, pet.value1, &pet.value2, &pet.value3) != 4) {  // key value1 value2 value3
                 perror("Wrong number of arguments on modify_value.\n");
             } else {
-                res = modify_value(pet.key, &pet.value1, pet.value2, pet.value3);
+                res = modify_value(pet.key, pet.value1, pet.value2, pet.value3);
                 if (res == 1) {
                     printf("The value with key %d modified correctly.\n", pet.key);
                 } else {
@@ -87,7 +91,8 @@ int main(int argc, char *argv[]) {
             }
         }
 
-        if (strcmp(pet.operation, "4") == 0) { // delete_key
+        if (pet.operation == 4) { // delete_key
+            printf("Arguments for delete_key: ");
             if (scanf("%d", &pet.key) != 1) {  // key
                 perror("Wrong number of arguments on delete_key.\n");
             } else {
@@ -100,7 +105,8 @@ int main(int argc, char *argv[]) {
             }
         }
 
-        if (strcmp(pet.operation, "5") == 0) { // exist
+        if (pet.operation == 5) { // exist
+            printf("Arguments for exist: ");
             if (scanf("%d", &pet.key) != 1) {  // key
                 perror("Wrong number of arguments on exist.\n");
             } else {
@@ -113,7 +119,8 @@ int main(int argc, char *argv[]) {
             }
         }
 
-        if (strcmp(pet.operation, "6") == 0) { // copy_key
+        if (pet.operation == 6) { // copy_key
+            printf("Arguments for copy_key: ");
             if (scanf("%d %d", &pet.key, &pet.key2) != 2) {  // key1 key2
                 perror("Wrong number of arguments on copy_key.\n");
             } else {
@@ -126,7 +133,8 @@ int main(int argc, char *argv[]) {
             }
         }
 
-        if (strcmp(pet.operation, "7") == 0) { // EXIT
+        if (pet.operation == 7) { // EXIT
+            printf("Exiting...\n");
             break;
         }
     }

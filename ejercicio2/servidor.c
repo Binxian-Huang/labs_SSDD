@@ -1,7 +1,12 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <mqueue.h>
 #include <pthread.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <sys/socket.h>
+#include <errno.h>
+#include <string.h>
+#include <unistd.h>
 #include "servidor.h"
 
 pthread_mutex_t mutex_mensaje = PTHREAD_MUTEX_INITIALIZER;
@@ -21,7 +26,7 @@ int main() {
         exit(1);
     }
 
-    if (setsockopt(socket_fd, SOL_SOCKET, SO_REUSEADDR, (char *)&val, sizeof(int)) == -1) {
+    if (setsockopt(socket_fd, SOL_SOCKET, SO_REUSEADDR, (void *)&val, sizeof(val)) == -1) {
         perror("Error setting socket options on server.");
         exit(1);
     }
@@ -58,6 +63,7 @@ int main() {
             }
             mensaje_no_copiado = 1;
             pthread_mutex_unlock(&mutex_mensaje);
+            printf("Thread created for client_%d.\n", getpid());
         } else {
             perror("Error creating thread.");
             exit(1);
@@ -96,11 +102,13 @@ ssize_t readLine(int socket_fd, char *buffer, size_t size) {
         return -1;
     }
 
+    printf("After readLine on server.\n");
     buf = buffer;
     totRead = 0;
 
     for (;;) {
         numRead = read(socket_fd, &ch, 1);
+        printf("After read on server: %ld\n", numRead);
 
         if (numRead == -1) {
             if (errno == EINTR) {
@@ -127,6 +135,9 @@ ssize_t readLine(int socket_fd, char *buffer, size_t size) {
             }
         }
     }
+    *buf = '\0';
+    printf("totRead: %ld\n", totRead);
+    return totRead;
 }
 
 void treat_message(void *new_socket_fd) {
@@ -134,6 +145,7 @@ void treat_message(void *new_socket_fd) {
 
     pthread_mutex_lock(&mutex_mensaje);
     int socket_fd = *((int *) new_socket_fd);
+    printf("Socket_fd: %d, new_socket_fd: %d\n", socket_fd, *((int *) new_socket_fd));
     mensaje_no_copiado = 0;
     pthread_cond_signal(&cond_mensaje);
     pthread_mutex_unlock(&mutex_mensaje);
@@ -144,6 +156,7 @@ void treat_message(void *new_socket_fd) {
 
     readLine(socket_fd, buffer, 256);
     pet.operation = atoi(buffer);
+    printf("Operation code received on server: %d", pet.operation);
     switch (pet.operation) {
         case 0:                                     // if operation == 0 call init()
             result = init();
@@ -151,12 +164,13 @@ void treat_message(void *new_socket_fd) {
                 res.result = 1;                     // if init ended correctly set result to 1
                 sprintf(buffer, "%d", res.result);
                 sendMessage(socket_fd, buffer, strlen(buffer)+1);
+                printf("Init message sent from server.\n");
             }
             break;
         case 1:                                     // if operation == 1 call set_value()
             readLine(socket_fd, buffer, 256);
             pet.key = atoi(buffer);
-            readLine(socket_fd, &pet.value1, 256);
+            readLine(socket_fd, pet.value1, 256);
             readLine(socket_fd, buffer, 256);
             pet.value2 = atoi(buffer);
             readLine(socket_fd, buffer, 256);
@@ -192,7 +206,7 @@ void treat_message(void *new_socket_fd) {
         case 3:                                     // if operation == 3 call modify_value()
             readLine(socket_fd, buffer, 256);
             pet.key = atoi(buffer);
-            readLine(socket_fd, &pet.value1, 256);
+            readLine(socket_fd, pet.value1, 256);
             readLine(socket_fd, buffer, 256);
             pet.value2 = atoi(buffer);
             readLine(socket_fd, buffer, 256);

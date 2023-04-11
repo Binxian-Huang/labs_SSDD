@@ -5,10 +5,10 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
-#include <mqueue.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <sys/socket.h>
+#include <errno.h>
 #include "claves.h"
 
 
@@ -19,12 +19,11 @@ int socket_fd;
 int enable_connection() {
     struct sockaddr_in server_addr;
     short server_port = 8080;
-    struct hostent *server;
 
     socket_fd = socket(AF_INET, SOCK_STREAM, 0);
     bzero((char *) &server_addr, sizeof(server_addr));
     server_addr.sin_family = AF_INET;
-    server_addr.port = htons(server_port);
+    server_addr.sin_port = htons(server_port);
     if (inet_aton("127.0.0.1", &server_addr.sin_addr) == 0) {
         perror("Error in inet_aton on client.\n");
         return -1;
@@ -102,6 +101,8 @@ ssize_t readLine(int socket_fd, char *buffer, size_t size) {
             }
         }
     }
+    *buf = '\0';
+    return totRead;
 }
 
 int init() {            // function that sends the message of the init operation to the server
@@ -109,9 +110,11 @@ int init() {            // function that sends the message of the init operation
     int operation_code = 0;
     sprintf(buffer, "%d", operation_code);
     sendMessage(socket_fd, buffer, strlen(buffer)+1);
+    printf("init message sent\n");
 
     readLine(socket_fd, buffer, 256);
     res.result = atoi(buffer);
+    printf("init message received\n");
     return 0;
 }
 
