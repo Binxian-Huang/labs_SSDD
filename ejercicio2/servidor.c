@@ -15,8 +15,8 @@ pthread_cond_t cond_mensaje = PTHREAD_COND_INITIALIZER;
 int mensaje_no_copiado = 1;
 
 int main() {
-    pthread_t t_id;
-    pthread_attr_t t_attr;
+    // pthread_t t_id;
+    // pthread_attr_t t_attr;
     struct sockaddr_in server_addr, client_addr;
     socklen_t size;
     struct hostent *server;
@@ -53,26 +53,28 @@ int main() {
     
     size = sizeof(client_addr);
     while (1) {
-        pthread_attr_init(&t_attr);
-        pthread_attr_setdetachstate(&t_attr, PTHREAD_CREATE_DETACHED);
+        // pthread_attr_init(&t_attr);
+        // pthread_attr_setdetachstate(&t_attr, PTHREAD_CREATE_DETACHED);
 
         if ((new_socket_fd = accept(socket_fd, (struct sockaddr *) &client_addr, (socklen_t *)&size)) == -1) {
             perror("Error accepting connection on server.");
             exit(1);
         }
         
-        if (pthread_create(&t_id, &t_attr, (void *)treat_message, (void *)&new_socket_fd) == 0) {
-            printf("Thread created for client_%d.\n", getpid());
-            pthread_mutex_lock(&mutex_mensaje);
-            while (mensaje_no_copiado) {
-                pthread_cond_wait(&cond_mensaje, &mutex_mensaje);
-            }
-            mensaje_no_copiado = 1;
-            pthread_mutex_unlock(&mutex_mensaje);
-        } else {
-            perror("Error creating thread.");
-            exit(1);
-        }
+        treat_message(new_socket_fd);
+
+        // if (pthread_create(&t_id, &t_attr, (void *)treat_message, (void *)&new_socket_fd) == 0) {
+        //     printf("Thread created for client_%d.\n", getpid());
+        //     pthread_mutex_lock(&mutex_mensaje);
+        //     while (mensaje_no_copiado) {
+        //         pthread_cond_wait(&cond_mensaje, &mutex_mensaje);
+        //     }
+        //     mensaje_no_copiado = 1;
+        //     pthread_mutex_unlock(&mutex_mensaje);
+        // } else {
+        //     perror("Error creating thread.");
+        //     exit(1);
+        // }
     }
 
     close(socket_fd);
@@ -145,14 +147,15 @@ ssize_t readLine(int socket_fd, char *buffer, size_t size) {
     return totRead;
 }
 
-void treat_message(void *new_socket_fd) {
+// int treat_message(void *new_socket_fd) {
+int treat_message(int socket_fd) {
     char buffer[256];
 
-    pthread_mutex_lock(&mutex_mensaje);
-    int socket_fd = *((int *) new_socket_fd);
-    mensaje_no_copiado = 0;
-    pthread_cond_signal(&cond_mensaje);
-    pthread_mutex_unlock(&mutex_mensaje);
+    // pthread_mutex_lock(&mutex_mensaje);
+    // int socket_fd = *((int *) new_socket_fd);
+    // mensaje_no_copiado = 0;
+    // pthread_cond_signal(&cond_mensaje);
+    // pthread_mutex_unlock(&mutex_mensaje);
 
     int result;
     struct petition pet;
@@ -269,5 +272,6 @@ void treat_message(void *new_socket_fd) {
     }
 
     close(socket_fd);
-    pthread_exit(0);
+    return 0;
+    // pthread_exit(0);
 }

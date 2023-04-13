@@ -28,4 +28,4 @@ int exist(int key);
 
 int copy_key(int key1, int key2);
 
-void treat_message(void *mess);
+int treat_message(int socket_fd);
