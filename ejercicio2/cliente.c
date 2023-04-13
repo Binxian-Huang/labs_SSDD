@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <ctype.h>
 #include "claves.h"
 
 
@@ -55,16 +56,7 @@ int main(int argc, char *argv[]) {
         //     }
         printf("Operation code: ");
         fgets(input, sizeof(input), stdin);
-        sscanf(input, "%d", &pet.operation);
-        // if (sscanf(input, "%1d%*c", &pet.operation) != 1 || pet.operation < 0 || pet.operation > 7 || (input[1] != '\0' && input[1] != '\n')) {
-            
-        //     int c;
-        //     while ((c = getchar()) != '\n' && c != EOF);
-        // }
-        if (pet.operation >= 0 && pet.operation <= 7 && input[1] == '\n') {
-            printf("You must introduce one operation code.\n");
-            continue;
-        } else if (input[0] == '\n') {
+        if (sscanf(input, "%d", &pet.operation) == 0 || pet.operation < 0 || pet.operation > 7 || (strlen(input) > 2) || ((strlen(input) == 2) && (!isdigit(input[0]) || !isspace(input[1])))) {
             printf("You must introduce one operation code.\n");
             continue;
         }
@@ -79,12 +71,12 @@ int main(int argc, char *argv[]) {
             }
         } else if (pet.operation == 1) { // set_value
             printf("Arguments for set_value: ");
-            fflush(stdin);
-            fgets(input, sizeof(input), stdin);
-            if (sscanf(input, "%d \"%[^\"]\" %d %lf %*s", &pet.key, pet.value1, &pet.value2, &pet.value3) != 4 || sscanf(input, "%*s") > 0) {  //  key value1 value2 value3
+            if (scanf("%d \"%[^\"]\" %d %lf", &pet.key, pet.value1, &pet.value2, &pet.value3) != 4) {  //  key value1 value2 value3
                 perror("Wrong number of arguments on set_value.\n");
-                break;
+                while (getchar() != '\n');
+                continue;
             } else {
+                printf("key: %d, value1: %s, value2: %d, value3: %lf.\n", pet.key, pet.value1, pet.value2, pet.value3);
                 res = set_value(pet.key, pet.value1, pet.value2, pet.value3);
                 if (res == 1) {
                     printf("The value with key %d set correctly.\n", pet.key);
@@ -94,11 +86,10 @@ int main(int argc, char *argv[]) {
             }
         } else if (pet.operation == 2) { // get_value
             printf("Arguments for get_value: ");
-            fflush(stdin);
             fgets(input, sizeof(input), stdin);
             if (sscanf(input, "%d %*s", &pet.key) != 1 || sscanf(input, "%*s") > 0) {  // key 
                 perror("Wrong number of arguments on get_value.\n");
-                break;
+                continue;
             } else {
                 res = get_value(pet.key, pet.value1, &pet.value2, &pet.value3);
                 if (res == 1) {
@@ -109,11 +100,10 @@ int main(int argc, char *argv[]) {
             }
         } else if (pet.operation == 3) { // modify_value
             printf("Arguments for modify_value: ");
-            fflush(stdin);
             fgets(input, sizeof(input), stdin);
             if (sscanf(input, "%d \"%[^\"]\" %d %lf %*s", &pet.key, pet.value1, &pet.value2, &pet.value3) != 4 || sscanf(input, "%*s") > 0) {  // key value1 value2 value3
                 perror("Wrong number of arguments on modify_value.\n");
-                break;
+                continue;
             } else {
                 res = modify_value(pet.key, pet.value1, pet.value2, pet.value3);
                 if (res == 1) {
@@ -124,11 +114,10 @@ int main(int argc, char *argv[]) {
             }
         } else if (pet.operation == 4) { // delete_key
             printf("Arguments for delete_key: ");
-            fflush(stdin);
             fgets(input, sizeof(input), stdin);
             if (sscanf(input, "%d %*s", &pet.key) != 1 || sscanf(input, "%*s") > 0) {  // key
                 perror("Wrong number of arguments on delete_key.\n");
-                break;
+                continue;
             } else {
                 res = delete_key(pet.key);
                 if (res == 1) {
@@ -139,11 +128,10 @@ int main(int argc, char *argv[]) {
             }
         } else if (pet.operation == 5) { // exist
             printf("Arguments for exist: ");
-            fflush(stdin);
             fgets(input, sizeof(input), stdin);
             if (sscanf(input, "%d %*s", &pet.key) != 1 || sscanf(input, "%*s") > 0) {  // key
                 perror("Wrong number of arguments on exist.\n");
-                break;
+                continue;
             } else {
                 res = exist(pet.key);
                 if (res == 1) {
@@ -154,11 +142,10 @@ int main(int argc, char *argv[]) {
             }
         } else if (pet.operation == 6) { // copy_key
             printf("Arguments for copy_key: ");
-            fflush(stdin);
             fgets(input, sizeof(input), stdin);
             if (sscanf(input, "%d %d %*s", &pet.key, &pet.key2) != 2 || sscanf(input, "%*s") > 0) {  // key1 key2
                 perror("Wrong number of arguments on copy_key.\n");
-                break;
+                continue;
             } else {
                 res = copy_key(pet.key, pet.key2);
                 if (res == 0) {
@@ -170,8 +157,6 @@ int main(int argc, char *argv[]) {
         } else if (pet.operation == 7) { // EXIT
             printf("Exiting...\n");
             break;
-        } else {
-            printf("Wrong operation code.\n");
         }
     }
 
