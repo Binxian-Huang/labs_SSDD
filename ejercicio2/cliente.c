@@ -55,12 +55,21 @@ int main(int argc, char *argv[]) {
         //     }
         printf("Operation code: ");
         fgets(input, sizeof(input), stdin);
-        if (sscanf(input, "%1d%*c", &pet.operation) != 1 || pet.operation < 0 || pet.operation > 7 || (input[1] != '\0' && input[1] != '\n')) {
+        sscanf(input, "%d", &pet.operation);
+        // if (sscanf(input, "%1d%*c", &pet.operation) != 1 || pet.operation < 0 || pet.operation > 7 || (input[1] != '\0' && input[1] != '\n')) {
+            
+        //     int c;
+        //     while ((c = getchar()) != '\n' && c != EOF);
+        // }
+        if (pet.operation >= 0 && pet.operation <= 7 && input[1] == '\n') {
             printf("You must introduce one operation code.\n");
-            int c;
-            while ((c = getchar()) != '\n' && c != EOF);
+            continue;
+        } else if (input[0] == '\n') {
+            printf("You must introduce one operation code.\n");
+            continue;
         }
 
+        memset(input, 0, sizeof(input));
         if (pet.operation == 0) { // init
             res = init();
             if (res == 0) {
