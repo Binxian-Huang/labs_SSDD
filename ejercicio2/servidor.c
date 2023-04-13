@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <pthread.h>
+#include <netdb.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <sys/socket.h>
@@ -18,6 +19,8 @@ int main() {
     pthread_attr_t t_attr;
     struct sockaddr_in server_addr, client_addr;
     socklen_t size;
+    struct hostent *server;
+    char *server_name = "localhost";
     int socket_fd, new_socket_fd;
     int val = 1;
 
@@ -32,9 +35,11 @@ int main() {
     }
 
     bzero((char *) &server_addr, sizeof(server_addr));
+    server = gethostbyname(server_name);
     server_addr.sin_family = AF_INET;
     server_addr.sin_port = htons(8080);
-    server_addr.sin_addr.s_addr = INADDR_ANY;
+    //server_addr.sin_addr.s_addr = INADDR_ANY;
+    memcpy(&(server_addr.sin_addr), server->h_addr, server->h_length);
 
     if (bind(socket_fd, (struct sockaddr *) &server_addr, sizeof(server_addr)) == -1) {
         perror("Error binding socket on server.");
@@ -57,13 +62,13 @@ int main() {
         }
         
         if (pthread_create(&t_id, &t_attr, (void *)treat_message, (void *)&new_socket_fd) == 0) {
+            printf("Thread created for client_%d.\n", getpid());
             pthread_mutex_lock(&mutex_mensaje);
             while (mensaje_no_copiado) {
                 pthread_cond_wait(&cond_mensaje, &mutex_mensaje);
             }
             mensaje_no_copiado = 1;
             pthread_mutex_unlock(&mutex_mensaje);
-            printf("Thread created for client_%d.\n", getpid());
         } else {
             perror("Error creating thread.");
             exit(1);
@@ -106,7 +111,9 @@ ssize_t readLine(int socket_fd, char *buffer, size_t size) {
     totRead = 0;
 
     for (;;) {
+        printf("Before read of readline in server.\n");
         numRead = read(socket_fd, &ch, 1);
+        printf("After read of readline in server.\n");
 
         if (numRead == -1) {
             if (errno == EINTR) {
@@ -134,7 +141,7 @@ ssize_t readLine(int socket_fd, char *buffer, size_t size) {
         }
     }
     *buf = '\0';
-    printf("Value: %c\n", *buf);
+    printf("Value: %s\n", buf);
     return totRead;
 }
 

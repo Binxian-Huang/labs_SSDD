@@ -146,5 +146,6 @@ int main(int argc, char *argv[]) {
     }
 
     disable_connection();
+    printf("Connection disabled.\n");
     exit(0);
 }

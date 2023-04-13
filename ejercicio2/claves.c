@@ -5,6 +5,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+#include <netdb.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <sys/socket.h>
@@ -19,15 +20,15 @@ int socket_fd;
 int enable_connection() {
     struct sockaddr_in server_addr;
     short server_port = 8080;
+    struct hostent *server;
+    char *server_name = "localhost";
 
     socket_fd = socket(AF_INET, SOCK_STREAM, 0);
     bzero((char *) &server_addr, sizeof(server_addr));
+    server = gethostbyname(server_name);
     server_addr.sin_family = AF_INET;
     server_addr.sin_port = htons(server_port);
-    if (inet_aton("127.0.0.1", &server_addr.sin_addr) == 0) {
-        perror("Error in inet_aton on client.\n");
-        return -1;
-    }
+    memcpy(&(server_addr.sin_addr), server->h_addr, server->h_length);
     
     if (connect(socket_fd, (struct sockaddr *) &server_addr, sizeof(server_addr)) == -1) {
         perror("Error in connect on client.\n");
