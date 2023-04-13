@@ -112,10 +112,9 @@ ssize_t readLine(int socket_fd, char *buffer, size_t size) {
     buf = buffer;
     totRead = 0;
 
+    printf("Before for loop.\n");
     for (;;) {
-        printf("Before read of readline in server.\n");
         numRead = read(socket_fd, &ch, 1);
-        printf("After read of readline in server.\n");
 
         if (numRead == -1) {
             if (errno == EINTR) {
@@ -142,6 +141,7 @@ ssize_t readLine(int socket_fd, char *buffer, size_t size) {
             }
         }
     }
+    printf("After for loop.\n");
     *buf = '\0';
     printf("Value: %s\n", buf);
     return totRead;
