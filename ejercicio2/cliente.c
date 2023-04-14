@@ -82,7 +82,6 @@ int main(int argc, char *argv[]) {
             }
         } else if (pet.operation == 3) { // modify_value
             printf("Arguments for modify_value: ");
-            fgets(input, sizeof(input), stdin);
             if (scanf("%d \"%[^\"]\" %d %lf", &pet.key, pet.value1, &pet.value2, &pet.value3) != 4) {  // key value1 value2 value3
                 perror("Wrong number of arguments on modify_value.\n");
                 continue;

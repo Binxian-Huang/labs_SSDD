@@ -19,8 +19,8 @@ int main() {
     // pthread_attr_t t_attr;
     struct sockaddr_in server_addr, client_addr;
     socklen_t size;
-    struct hostent *server;
-    char *server_name = "localhost";
+    //struct hostent *server;
+    //char *server_name = "localhost";
     int socket_fd, new_socket_fd;
     int val = 1;
 
@@ -35,11 +35,11 @@ int main() {
     }
 
     bzero((char *) &server_addr, sizeof(server_addr));
-    server = gethostbyname(server_name);
+    //server = gethostbyname(server_name);
     server_addr.sin_family = AF_INET;
-    server_addr.sin_port = htons(8080);
-    //server_addr.sin_addr.s_addr = INADDR_ANY;
-    memcpy(&(server_addr.sin_addr), server->h_addr, server->h_length);
+    server_addr.sin_port = htons(8005);
+    server_addr.sin_addr.s_addr = INADDR_ANY;
+    //memcpy(&(server_addr.sin_addr), server->h_addr, server->h_length);
 
     if (bind(socket_fd, (struct sockaddr *) &server_addr, sizeof(server_addr)) == -1) {
         perror("Error binding socket on server.");
@@ -61,7 +61,7 @@ int main() {
             exit(1);
         }
         
-        treat_message(new_socket_fd);
+        treat_message(&new_socket_fd);
 
         // if (pthread_create(&t_id, &t_attr, (void *)treat_message, (void *)&new_socket_fd) == 0) {
         //     printf("Thread created for client_%d.\n", getpid());
@@ -85,11 +85,11 @@ int sendMessage(int socket_fd, char *buffer, int size) {
     int bytes_sent;
     int bytes_left = size;
 
-    while ((bytes_sent >=0) && (bytes_left > 0)) {
+    do {
         bytes_sent = write(socket_fd, buffer, bytes_left);
-        bytes_left -= bytes_sent;
-        buffer += bytes_sent;
-    }
+        bytes_left = bytes_left - bytes_sent;
+        buffer = buffer + bytes_sent;
+    } while ((bytes_sent >=0) && (bytes_left > 0));
 
     if (bytes_sent < 0) {
         return -1;
@@ -143,16 +143,17 @@ ssize_t readLine(int socket_fd, char *buffer, size_t size) {
     }
     printf("After for loop.\n");
     *buf = '\0';
-    printf("Value: %s\n", buf);
+    printf("Value: %s\n", buffer);
     return totRead;
 }
 
 // int treat_message(void *new_socket_fd) {
-int treat_message(int socket_fd) {
+int treat_message(int * msocket_fd) {
     char buffer[256];
 
+    
     // pthread_mutex_lock(&mutex_mensaje);
-    // int socket_fd = *((int *) new_socket_fd);
+    int socket_fd = *((int *) msocket_fd);
     // mensaje_no_copiado = 0;
     // pthread_cond_signal(&cond_mensaje);
     // pthread_mutex_unlock(&mutex_mensaje);
@@ -166,36 +167,55 @@ int treat_message(int socket_fd) {
     printf("Operation code received on server: %d\n", pet.operation);
     switch (pet.operation) {
         case 0:                                     // if operation == 0 call init()
+            printf("Before init server\n");
             result = init();
+            printf("Resultado: %d\n", result);
             if (result == 0) {
                 res.result = 1;                     // if init ended correctly set result to 1
                 sprintf(buffer, "%d", res.result);
                 sendMessage(socket_fd, buffer, strlen(buffer)+1);
-                printf("Init message sent from server.\n");
+                printf("Init response sent from server.\n");
+            } else {
+                res.result = 0;
+                sprintf(buffer, "%d", res.result);
+                sendMessage(socket_fd, buffer, strlen(buffer)+1);
+                printf("Init response sent from server.\n");
             }
             break;
-        case 1:                                     // if operation == 1 call set_value()
+        case 1:   
+        fprintf(stderr, "Antes readline\n") ;                                 // if operation == 1 call set_value()
             readLine(socket_fd, buffer, 256);
             pet.key = atoi(buffer);
+            fprintf(stderr, "Antes readline\n") ;  
             readLine(socket_fd, pet.value1, 256);
+            fprintf(stderr, "Antes readline\n") ;  
             readLine(socket_fd, buffer, 256);
             pet.value2 = atoi(buffer);
+            fprintf(stderr, "Antes readline\n") ;  
             readLine(socket_fd, buffer, 256);
             pet.value3 = atof(buffer);
 
+            printf("Before set_value server\n");
+            printf("Key: %d, Value1: %s, Value2: %d, Value3: %lf\n", pet.key, pet.value1, pet.value2, pet.value3);
             result = set_value(pet.key, pet.value1, pet.value2, pet.value3);
             if (result == 0) {
                 res.result = 1;                     // if set_value ended correctly set result to 1
                 sprintf(buffer, "%d", res.result);
                 sendMessage(socket_fd, buffer, strlen(buffer)+1);
+                printf("set_value response sent from server (%d)\n",result);
             } else {
                 res.result = 0;
+                sprintf(buffer, "%d", res.result);
+                sendMessage(socket_fd, buffer, strlen(buffer)+1);
+                printf("set_value response sent from server (%d)\n",result);
             }
             break;
         case 2:                                     // if operation == 2 call get_value()
             readLine(socket_fd, buffer, 256);
             pet.key = atoi(buffer);
 
+            printf("Before get_value server\n");
+            printf("Key: %d\n", pet.key);
             result = get_value(pet.key, res.value1, &res.value2, &res.value3);
             if (result == 0) {
                 res.result = 1;                     // if get_value ended correctly set result to 1
@@ -208,6 +228,8 @@ int treat_message(int socket_fd) {
                 sendMessage(socket_fd, buffer, strlen(buffer)+1);
             } else {
                 res.result = 0;
+                sprintf(buffer, "%d", res.result);
+                sendMessage(socket_fd, buffer, strlen(buffer)+1);
             }
             break;
         case 3:                                     // if operation == 3 call modify_value()
@@ -219,6 +241,8 @@ int treat_message(int socket_fd) {
             readLine(socket_fd, buffer, 256);
             pet.value3 = atof(buffer);
 
+            printf("Before modify_value server\n");
+            printf("Key: %d, Value1: %s, Value2: %d, Value3: %lf\n", pet.key, pet.value1, pet.value2, pet.value3);
             result = modify_value(pet.key, pet.value1, pet.value2, pet.value3);
             if (result == 0) {
                 res.result = 1;                     // if modify_value ended correctly set result to 1
@@ -226,12 +250,16 @@ int treat_message(int socket_fd) {
                 sendMessage(socket_fd, buffer, strlen(buffer)+1);
             } else {
                 res.result = 0;
+                sprintf(buffer, "%d", res.result);
+                sendMessage(socket_fd, buffer, strlen(buffer)+1);
             }
             break;
         case 4:                                     // if operation == 4 call delete_key()
             readLine(socket_fd, buffer, 256);
             pet.key = atoi(buffer);
 
+            printf("Before delete_key server\n");
+            printf("Key: %d\n", pet.key);
             result = delete_key(pet.key);
             if (result == 0) {                      // if delete_key ended correctly set result to 1
                 res.result = 1;
@@ -239,12 +267,16 @@ int treat_message(int socket_fd) {
                 sendMessage(socket_fd, buffer, strlen(buffer)+1);
             } else {
                 res.result = 0;
+                sprintf(buffer, "%d", res.result);
+                sendMessage(socket_fd, buffer, strlen(buffer)+1);
             }
             break;
         case 5:                                     // if operation == 5 call exist()
             readLine(socket_fd, buffer, 256);
             pet.key = atoi(buffer);
 
+            printf("Before exist server\n");
+            printf("Key: %d\n", pet.key);
             result = exist(pet.key);
             if (result == 1) {                      // if exist ended correctly set result to 1
                 res.result = 1;
@@ -252,6 +284,8 @@ int treat_message(int socket_fd) {
                 sendMessage(socket_fd, buffer, strlen(buffer)+1);
             } else {
                 res.result = 0;
+                sprintf(buffer, "%d", res.result);
+                sendMessage(socket_fd, buffer, strlen(buffer)+1);
             }
             break;
         case 6:                                     // if operation == 6 call copy_key()
@@ -260,11 +294,17 @@ int treat_message(int socket_fd) {
             readLine(socket_fd, buffer, 256);
             pet.key2 = atoi(buffer);
 
+            printf("Before copy_key server\n");
+            printf("Key: %d, Key2: %d\n", pet.key, pet.key2);
             result = copy_key(pet.key, pet.key2);
             if (result == 0) {                      // if copy_key ended correctly set result to 1
                 res.result = 1;
+                sprintf(buffer, "%d", res.result);
+                sendMessage(socket_fd, buffer, strlen(buffer)+1);
             } else {
                 res.result = 0;
+                sprintf(buffer, "%d", res.result);
+                sendMessage(socket_fd, buffer, strlen(buffer)+1);
             }
             break;
         default:

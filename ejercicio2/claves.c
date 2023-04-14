@@ -19,7 +19,7 @@ int socket_fd;
 
 int enable_connection() {
     struct sockaddr_in server_addr;
-    short server_port = 8080;
+    short server_port = 8005;
     struct hostent *server;
     char *server_name = "localhost";
 
@@ -35,7 +35,7 @@ int enable_connection() {
         return -1;
     }
 
-    return 0;
+    return socket_fd;
 }
 
 int disable_connection() {
@@ -47,15 +47,18 @@ int sendMessage(int socket_fd, char *buffer, int size) {
     int bytes_sent;
     int bytes_left = size;
 
-    while ((bytes_sent >=0) && (bytes_left > 0)) {
+    printf("Valor a enviar: %s\n", buffer);
+    do {
         bytes_sent = write(socket_fd, buffer, bytes_left);
-        bytes_left -= bytes_sent;
-        buffer += bytes_sent;
-    }
+        bytes_left = bytes_left - bytes_sent;
+        buffer = buffer + bytes_sent;
+    } while ((bytes_sent >=0) && (bytes_left > 0));
 
     if (bytes_sent < 0) {
+        printf("Error al enviar bytes.\n");
         return -1;
     } else {
+        printf("Todos los bytes mandados.\n");
         return 0;
     }
 }
@@ -109,31 +112,47 @@ ssize_t readLine(int socket_fd, char *buffer, size_t size) {
 int init() {            // function that sends the message of the init operation to the server
     char buffer[256];
     int operation_code = 0;
+    int sc;
+
+    sc = enable_connection();
     sprintf(buffer, "%d", operation_code);
     sendMessage(socket_fd, buffer, strlen(buffer)+1);
     printf("init message sent\n");
 
     readLine(socket_fd, buffer, 256);
     res.result = atoi(buffer);
-    printf("init message received\n");
-    return 0;
+    printf("init response received\n");
+    close(sc);
+    if (res.result == 1) {
+        return 0;
+    } else {
+        return 1;
+    }
 }
 
 int set_value(int key, char *value1, int value2, double value3) {           // function that sends the message of the set_value operation to the server
     char buffer[256];
     int operation_code = 1;    
+    printf("antes 1 \n");
     sprintf(buffer, "%d", operation_code);
     sendMessage(socket_fd, buffer, strlen(buffer)+1);
+    printf("antes 2 \n");
     sprintf(buffer, "%d", key);
     sendMessage(socket_fd, buffer, strlen(buffer)+1);
+    printf("antes 3 \n");
     sendMessage(socket_fd, value1, strlen(value1)+1);
+    printf("antes 4 \n");
     sprintf(buffer, "%d", value2);
     sendMessage(socket_fd, buffer, strlen(buffer)+1);
+    printf("antes 5 \n");
     sprintf(buffer, "%f", value3);
-    sendMessage(socket_fd, buffer, strlen(buffer)+1);                                                  
+    sendMessage(socket_fd, buffer, strlen(buffer)+1);   
+    printf("set_value message sent\n");   
+    fflush(stdout);                                           
 
     readLine(socket_fd, buffer, 256);
     res.result = atoi(buffer);
+    printf("set_value response received\n");
     if (res.result == 1) {
         return 1;
     } else {
@@ -146,7 +165,9 @@ int get_value(int key, char *value1, int *value2, double *value3) {         // f
     int operation_code = 2;    
     sprintf(buffer, "%d", operation_code);
     sendMessage(socket_fd, buffer, strlen(buffer)+1);
-    sprintf(buffer, "%d", key);                                                       
+    sprintf(buffer, "%d", key);
+    sendMessage(socket_fd, buffer, strlen(buffer)+1);
+    printf("get_value message sent\n");
 
     readLine(socket_fd, buffer, 256);
     res.result = atoi(buffer);
@@ -155,6 +176,7 @@ int get_value(int key, char *value1, int *value2, double *value3) {         // f
     *value2 = atoi(buffer);
     readLine(socket_fd, buffer, 256);
     *value3 = atof(buffer);
+    printf("get_value response received\n");
     if (res.result == 1) {
         return 1;
     } else {
@@ -173,10 +195,12 @@ int modify_value(int key, char *value1, int value2, double value3) {        // f
     sprintf(buffer, "%d", value2);
     sendMessage(socket_fd, buffer, strlen(buffer)+1);
     sprintf(buffer, "%f", value3);
-    sendMessage(socket_fd, buffer, strlen(buffer)+1);                                                  
+    sendMessage(socket_fd, buffer, strlen(buffer)+1);
+    printf("modify_value message sent\n");
 
     readLine(socket_fd, buffer, 256);
     res.result = atoi(buffer);
+    printf("modify_value response received\n");
     if (res.result == 1) {
         return 1;
     } else {
@@ -190,10 +214,12 @@ int delete_key(int key) {                                        // function tha
     sprintf(buffer, "%d", operation_code);
     sendMessage(socket_fd, buffer, strlen(buffer)+1);
     sprintf(buffer, "%d", key);
-    sendMessage(socket_fd, buffer, strlen(buffer)+1);                                             
+    sendMessage(socket_fd, buffer, strlen(buffer)+1);
+    printf("delete_key message sent\n");
 
     readLine(socket_fd, buffer, 256);
     res.result = atoi(buffer);
+    printf("delete_key response received\n");
     if (res.result == 1) {
         return 1;
     } else {
@@ -208,9 +234,11 @@ int exist(int key) {                                // function that sends the m
     sendMessage(socket_fd, buffer, strlen(buffer)+1);
     sprintf(buffer, "%d", key);
     sendMessage(socket_fd, buffer, strlen(buffer)+1);
+    printf("exist message sent\n");
     
     readLine(socket_fd, buffer, 256);
     res.result = atoi(buffer);
+    printf("exist response received\n");
     if (res.result == 1) {
         return 1;
     } else {
@@ -227,9 +255,11 @@ int copy_key(int key1, int key2) {                      // function that sends t
     sendMessage(socket_fd, buffer, strlen(buffer)+1);
     sprintf(buffer, "%d", key2);
     sendMessage(socket_fd, buffer, strlen(buffer)+1);
+    printf("copy_key message sent\n");
     
     readLine(socket_fd, buffer, 256);
     res.result = atoi(buffer);
+    printf("copy_key response received\n");
     if (res.result == 1) {
         return 1;
     } else {
