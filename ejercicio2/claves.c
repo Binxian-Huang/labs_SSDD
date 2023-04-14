@@ -12,11 +12,6 @@
 #include <errno.h>
 #include "claves.h"
 
-
-struct petition pet;
-struct result res;
-int socket_fd;
-
 int enable_connection() {
     struct sockaddr_in server_addr;
     short server_port = 8005;
@@ -33,14 +28,12 @@ int enable_connection() {
     if (connect(socket_fd, (struct sockaddr *) &server_addr, sizeof(server_addr)) == -1) {
         perror("Error in connect on client.\n");
         return -1;
+    } else {
+        printf("Connection established.\n");
+        return 0;
     }
 
     return socket_fd;
-}
-
-int disable_connection() {
-    close(socket_fd);
-    return 0;
 }
 
 int sendMessage(int socket_fd, char *buffer, int size) {
@@ -110,19 +103,20 @@ ssize_t readLine(int socket_fd, char *buffer, size_t size) {
 }
 
 int init() {            // function that sends the message of the init operation to the server
+    struct result res;
     char buffer[256];
     int operation_code = 0;
-    int sc;
-
-    sc = enable_connection();
+    int sc = enable_connection();
+    
     sprintf(buffer, "%d", operation_code);
-    sendMessage(socket_fd, buffer, strlen(buffer)+1);
+    sendMessage(sc, buffer, strlen(buffer)+1);
     printf("init message sent\n");
 
-    readLine(socket_fd, buffer, 256);
+    readLine(sc, buffer, 256);
     res.result = atoi(buffer);
-    printf("init response received\n");
     close(sc);
+    printf("init response received\n");
+    
     if (res.result == 1) {
         return 0;
     } else {
@@ -131,28 +125,33 @@ int init() {            // function that sends the message of the init operation
 }
 
 int set_value(int key, char *value1, int value2, double value3) {           // function that sends the message of the set_value operation to the server
+    struct result res;
     char buffer[256];
-    int operation_code = 1;    
+    int operation_code = 1;
+    int sc = enable_connection();
+
     printf("antes 1 \n");
     sprintf(buffer, "%d", operation_code);
-    sendMessage(socket_fd, buffer, strlen(buffer)+1);
+    sendMessage(sc, buffer, strlen(buffer)+1);
     printf("antes 2 \n");
     sprintf(buffer, "%d", key);
-    sendMessage(socket_fd, buffer, strlen(buffer)+1);
+    sendMessage(sc, buffer, strlen(buffer)+1);
     printf("antes 3 \n");
-    sendMessage(socket_fd, value1, strlen(value1)+1);
+    sendMessage(sc, value1, strlen(value1)+1);
     printf("antes 4 \n");
     sprintf(buffer, "%d", value2);
-    sendMessage(socket_fd, buffer, strlen(buffer)+1);
+    sendMessage(sc, buffer, strlen(buffer)+1);
     printf("antes 5 \n");
     sprintf(buffer, "%f", value3);
-    sendMessage(socket_fd, buffer, strlen(buffer)+1);   
+    sendMessage(sc, buffer, strlen(buffer)+1);   
     printf("set_value message sent\n");   
     fflush(stdout);                                           
 
-    readLine(socket_fd, buffer, 256);
+    readLine(sc, buffer, 256);
     res.result = atoi(buffer);
+    close(sc);
     printf("set_value response received\n");
+
     if (res.result == 1) {
         return 1;
     } else {
@@ -161,22 +160,27 @@ int set_value(int key, char *value1, int value2, double value3) {           // f
 }
 
 int get_value(int key, char *value1, int *value2, double *value3) {         // function that sends the message of the get_value operation to the server
+    struct result res;
     char buffer[256];
-    int operation_code = 2;    
+    int operation_code = 2;
+    int sc = enable_connection();
+
     sprintf(buffer, "%d", operation_code);
-    sendMessage(socket_fd, buffer, strlen(buffer)+1);
+    sendMessage(sc, buffer, strlen(buffer)+1);
     sprintf(buffer, "%d", key);
-    sendMessage(socket_fd, buffer, strlen(buffer)+1);
+    sendMessage(sc, buffer, strlen(buffer)+1);
     printf("get_value message sent\n");
 
-    readLine(socket_fd, buffer, 256);
+    readLine(sc, buffer, 256);
     res.result = atoi(buffer);
-    readLine(socket_fd, value1, 256);
-    readLine(socket_fd, buffer, 256);
+    readLine(sc, value1, 256);
+    readLine(sc, buffer, 256);
     *value2 = atoi(buffer);
-    readLine(socket_fd, buffer, 256);
+    readLine(sc, buffer, 256);
     *value3 = atof(buffer);
+    close(sc);
     printf("get_value response received\n");
+
     if (res.result == 1) {
         return 1;
     } else {
@@ -185,22 +189,27 @@ int get_value(int key, char *value1, int *value2, double *value3) {         // f
 }
 
 int modify_value(int key, char *value1, int value2, double value3) {        // function that sends the message of the modify_value operation to the server
+    struct result res;
     char buffer[256];
-    int operation_code = 3;    
+    int operation_code = 3;
+    int sc = enable_connection();
+
     sprintf(buffer, "%d", operation_code);
-    sendMessage(socket_fd, buffer, strlen(buffer)+1);
+    sendMessage(sc, buffer, strlen(buffer)+1);
     sprintf(buffer, "%d", key);
-    sendMessage(socket_fd, buffer, strlen(buffer)+1);
-    sendMessage(socket_fd, value1, strlen(value1)+1);
+    sendMessage(sc, buffer, strlen(buffer)+1);
+    sendMessage(sc, value1, strlen(value1)+1);
     sprintf(buffer, "%d", value2);
-    sendMessage(socket_fd, buffer, strlen(buffer)+1);
+    sendMessage(sc, buffer, strlen(buffer)+1);
     sprintf(buffer, "%f", value3);
-    sendMessage(socket_fd, buffer, strlen(buffer)+1);
+    sendMessage(sc, buffer, strlen(buffer)+1);
     printf("modify_value message sent\n");
 
-    readLine(socket_fd, buffer, 256);
+    readLine(sc, buffer, 256);
     res.result = atoi(buffer);
+    close(sc);
     printf("modify_value response received\n");
+
     if (res.result == 1) {
         return 1;
     } else {
@@ -209,15 +218,18 @@ int modify_value(int key, char *value1, int value2, double value3) {        // f
 }
 
 int delete_key(int key) {                                        // function that sends the message of the delete_key operation to the server
+    struct result res;
     char buffer[256];
-    int operation_code = 4;    
+    int operation_code = 4;
+    int sc = enable_connection();
+
     sprintf(buffer, "%d", operation_code);
-    sendMessage(socket_fd, buffer, strlen(buffer)+1);
+    sendMessage(sc, buffer, strlen(buffer)+1);
     sprintf(buffer, "%d", key);
-    sendMessage(socket_fd, buffer, strlen(buffer)+1);
+    sendMessage(sc, buffer, strlen(buffer)+1);
     printf("delete_key message sent\n");
 
-    readLine(socket_fd, buffer, 256);
+    readLine(sc, buffer, 256);
     res.result = atoi(buffer);
     printf("delete_key response received\n");
     if (res.result == 1) {
@@ -228,17 +240,22 @@ int delete_key(int key) {                                        // function tha
 }
 
 int exist(int key) {                                // function that sends the message of the exist operation to the server
+    struct result res;
     char buffer[256];
-    int operation_code = 5;    
+    int operation_code = 5;
+    int sc = enable_connection();
+
     sprintf(buffer, "%d", operation_code);
-    sendMessage(socket_fd, buffer, strlen(buffer)+1);
+    sendMessage(sc, buffer, strlen(buffer)+1);
     sprintf(buffer, "%d", key);
-    sendMessage(socket_fd, buffer, strlen(buffer)+1);
+    sendMessage(sc, buffer, strlen(buffer)+1);
     printf("exist message sent\n");
     
-    readLine(socket_fd, buffer, 256);
+    readLine(sc, buffer, 256);
     res.result = atoi(buffer);
+    close(sc);
     printf("exist response received\n");
+    
     if (res.result == 1) {
         return 1;
     } else {
@@ -247,19 +264,24 @@ int exist(int key) {                                // function that sends the m
 }
 
 int copy_key(int key1, int key2) {                      // function that sends the message of the copy_key operation to the server
+    struct result res;
     char buffer[256];
-    int operation_code = 6;    
+    int operation_code = 6;
+    int sc = enable_connection();
+
     sprintf(buffer, "%d", operation_code);
-    sendMessage(socket_fd, buffer, strlen(buffer)+1);
+    sendMessage(sc, buffer, strlen(buffer)+1);
     sprintf(buffer, "%d", key1);
-    sendMessage(socket_fd, buffer, strlen(buffer)+1);
+    sendMessage(sc, buffer, strlen(buffer)+1);
     sprintf(buffer, "%d", key2);
-    sendMessage(socket_fd, buffer, strlen(buffer)+1);
+    sendMessage(sc, buffer, strlen(buffer)+1);
     printf("copy_key message sent\n");
     
-    readLine(socket_fd, buffer, 256);
+    readLine(sc, buffer, 256);
     res.result = atoi(buffer);
+    close(sc);
     printf("copy_key response received\n");
+
     if (res.result == 1) {
         return 1;
     } else {

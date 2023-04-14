@@ -13,14 +13,6 @@ int main(int argc, char *argv[]) {
         printf("Usage: ./cliente. IP address 127.0.0.1 and port 8080 already set.");
     }
 
-    res = enable_connection();
-
-    if (res == 0) {
-        printf("Connection enabled.\n");
-    } else {
-        printf("Connection not enabled.\n");
-        exit(1);
-    }
     printf("These are the operations you can use:\n");
     printf("init - 0\n");
     printf("set_value - 1 <key> <value1> <value2> <value3>\n");
@@ -144,8 +136,5 @@ int main(int argc, char *argv[]) {
             break;
         }
     }
-
-    disable_connection();
-    printf("Connection disabled.\n");
     exit(0);
 }

@@ -19,8 +19,6 @@ int main() {
     // pthread_attr_t t_attr;
     struct sockaddr_in server_addr, client_addr;
     socklen_t size;
-    //struct hostent *server;
-    //char *server_name = "localhost";
     int socket_fd, new_socket_fd;
     int val = 1;
 
@@ -35,11 +33,9 @@ int main() {
     }
 
     bzero((char *) &server_addr, sizeof(server_addr));
-    //server = gethostbyname(server_name);
     server_addr.sin_family = AF_INET;
     server_addr.sin_port = htons(8005);
     server_addr.sin_addr.s_addr = INADDR_ANY;
-    //memcpy(&(server_addr.sin_addr), server->h_addr, server->h_length);
 
     if (bind(socket_fd, (struct sockaddr *) &server_addr, sizeof(server_addr)) == -1) {
         perror("Error binding socket on server.");
@@ -112,7 +108,6 @@ ssize_t readLine(int socket_fd, char *buffer, size_t size) {
     buf = buffer;
     totRead = 0;
 
-    printf("Before for loop.\n");
     for (;;) {
         numRead = read(socket_fd, &ch, 1);
 
@@ -141,7 +136,6 @@ ssize_t readLine(int socket_fd, char *buffer, size_t size) {
             }
         }
     }
-    printf("After for loop.\n");
     *buf = '\0';
     printf("Value: %s\n", buffer);
     return totRead;

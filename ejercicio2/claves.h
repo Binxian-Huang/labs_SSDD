@@ -16,8 +16,6 @@ struct result {
 
 int enable_connection();
 
-int disable_connection();
-
 int sendMessage(int socket_fd, char *buffer, int size);
 
 ssize_t readLine(int socket_fd, char *buffer, size_t size);
