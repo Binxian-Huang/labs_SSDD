@@ -25,6 +25,8 @@ int main() {
     if ((socket_fd = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
         perror("Error creating socket on server.");
         exit(1);
+    } else {
+        printf("Socket created.\n");
     }
 
     if (setsockopt(socket_fd, SOL_SOCKET, SO_REUSEADDR, (void *)&val, sizeof(val)) == -1) {
@@ -34,17 +36,23 @@ int main() {
 
     bzero((char *) &server_addr, sizeof(server_addr));
     server_addr.sin_family = AF_INET;
-    server_addr.sin_port = htons(8005);
+    server_addr.sin_port = htons(8081);
     server_addr.sin_addr.s_addr = INADDR_ANY;
 
     if (bind(socket_fd, (struct sockaddr *) &server_addr, sizeof(server_addr)) == -1) {
         perror("Error binding socket on server.");
         exit(1);
+    } else {
+        printf("Socket binded.\n");
+        // fflush(stdout);
     }
 
     if (listen(socket_fd, SOMAXCONN) == -1) {
         perror("Error listening on server.");
         exit(1);
+    } else {
+        printf("Listening on port %d.\n", ntohs(server_addr.sin_port));
+        // fflush(stdout);
     }
     
     size = sizeof(client_addr);
@@ -55,9 +63,13 @@ int main() {
         if ((new_socket_fd = accept(socket_fd, (struct sockaddr *) &client_addr, (socklen_t *)&size)) == -1) {
             perror("Error accepting connection on server.");
             exit(1);
+        } else {
+            printf("Connection accepted.\n");
         }
         
+        printf("Entering treat_message\n");
         treat_message(&new_socket_fd);
+        printf("Exited treat_message\n");
 
         // if (pthread_create(&t_id, &t_attr, (void *)treat_message, (void *)&new_socket_fd) == 0) {
         //     printf("Thread created for client_%d.\n", getpid());
@@ -74,6 +86,7 @@ int main() {
     }
 
     close(socket_fd);
+    printf("Server socket closed.\n");
     return 0;
 }
 
@@ -81,6 +94,7 @@ int sendMessage(int socket_fd, char *buffer, int size) {
     int bytes_sent;
     int bytes_left = size;
 
+    printf("Valor a enviar: %s.\n", buffer);
     do {
         bytes_sent = write(socket_fd, buffer, bytes_left);
         bytes_left = bytes_left - bytes_sent;
@@ -88,8 +102,10 @@ int sendMessage(int socket_fd, char *buffer, int size) {
     } while ((bytes_sent >=0) && (bytes_left > 0));
 
     if (bytes_sent < 0) {
+        printf("Error al enviar bytes.\n");
         return -1;
     } else {
+        printf("Todos los bytes mandados.\n");
         return 0;
     }
 }
@@ -143,11 +159,11 @@ ssize_t readLine(int socket_fd, char *buffer, size_t size) {
 
 // int treat_message(void *new_socket_fd) {
 int treat_message(int * msocket_fd) {
+    printf("Entered treat_message\n");
     char buffer[256];
-
-    
+    int socket_fd = *msocket_fd;
     // pthread_mutex_lock(&mutex_mensaje);
-    int socket_fd = *((int *) msocket_fd);
+    //int socket_fd = *((int *) msocket_fd);
     // mensaje_no_copiado = 0;
     // pthread_cond_signal(&cond_mensaje);
     // pthread_mutex_unlock(&mutex_mensaje);
@@ -155,7 +171,9 @@ int treat_message(int * msocket_fd) {
     int result;
     struct petition pet;
     struct result res;
-
+    printf("E./n");
+    printf("Waiting message./n");
+    fflush(stdout);
     readLine(socket_fd, buffer, 256);
     pet.operation = atoi(buffer);
     printf("Operation code received on server: %d\n", pet.operation);
@@ -166,18 +184,17 @@ int treat_message(int * msocket_fd) {
             printf("Resultado: %d\n", result);
             if (result == 0) {
                 res.result = 1;                     // if init ended correctly set result to 1
-                sprintf(buffer, "%d", res.result);
-                sendMessage(socket_fd, buffer, strlen(buffer)+1);
-                printf("Init response sent from server.\n");
             } else {
                 res.result = 0;
-                sprintf(buffer, "%d", res.result);
-                sendMessage(socket_fd, buffer, strlen(buffer)+1);
-                printf("Init response sent from server.\n");
             }
+            sprintf(buffer, "%d", res.result);
+            if (sendMessage(socket_fd, buffer, strlen(buffer)+1) == -1) {
+                perror("Error sending result code of init in server.\n");
+            }
+            printf("Init response sent from server.\n");
             break;
         case 1:   
-        fprintf(stderr, "Antes readline\n") ;                                 // if operation == 1 call set_value()
+            fprintf(stderr, "Antes readline\n") ;                                 // if operation == 1 call set_value()
             readLine(socket_fd, buffer, 256);
             pet.key = atoi(buffer);
             fprintf(stderr, "Antes readline\n") ;  
@@ -194,15 +211,14 @@ int treat_message(int * msocket_fd) {
             result = set_value(pet.key, pet.value1, pet.value2, pet.value3);
             if (result == 0) {
                 res.result = 1;                     // if set_value ended correctly set result to 1
-                sprintf(buffer, "%d", res.result);
-                sendMessage(socket_fd, buffer, strlen(buffer)+1);
-                printf("set_value response sent from server (%d)\n",result);
             } else {
                 res.result = 0;
-                sprintf(buffer, "%d", res.result);
-                sendMessage(socket_fd, buffer, strlen(buffer)+1);
-                printf("set_value response sent from server (%d)\n",result);
             }
+            sprintf(buffer, "%d", res.result);
+            if (sendMessage(socket_fd, buffer, strlen(buffer)+1) == -1) {
+                perror("Error sending result code of set_value in server.\n");
+            }
+            printf("set_value response sent from server (%d)\n",result);
             break;
         case 2:                                     // if operation == 2 call get_value()
             readLine(socket_fd, buffer, 256);
@@ -214,16 +230,26 @@ int treat_message(int * msocket_fd) {
             if (result == 0) {
                 res.result = 1;                     // if get_value ended correctly set result to 1
                 sprintf(buffer, "%d", res.result);
-                sendMessage(socket_fd, buffer, strlen(buffer)+1);
-                sendMessage(socket_fd, res.value1, strlen(res.value1)+1);
+                if (sendMessage(socket_fd, buffer, strlen(buffer)+1) == -1) {
+                    perror("Error sending result code of get_value in server.\n");
+                }
+                if (sendMessage(socket_fd, res.value1, strlen(buffer)+1) == -1) {
+                    perror("Error sending value1 of get_value in server.\n");
+                }
                 sprintf(buffer, "%d", res.value2);
-                sendMessage(socket_fd, buffer, strlen(buffer)+1);
+                if (sendMessage(socket_fd, buffer, strlen(buffer)+1) == -1) {
+                    perror("Error sending value2 of get_value in server.\n");
+                }
                 sprintf(buffer, "%f", res.value3);
-                sendMessage(socket_fd, buffer, strlen(buffer)+1);
+                if (sendMessage(socket_fd, buffer, strlen(buffer)+1) == -1) {
+                    perror("Error sending value3 of get_value in server.\n");
+                }
             } else {
                 res.result = 0;
                 sprintf(buffer, "%d", res.result);
-                sendMessage(socket_fd, buffer, strlen(buffer)+1);
+                if (sendMessage(socket_fd, buffer, strlen(buffer)+1) == -1) {
+                    perror("Error sending result code of get_value in server.\n");
+                }
             }
             break;
         case 3:                                     // if operation == 3 call modify_value()
@@ -240,12 +266,12 @@ int treat_message(int * msocket_fd) {
             result = modify_value(pet.key, pet.value1, pet.value2, pet.value3);
             if (result == 0) {
                 res.result = 1;                     // if modify_value ended correctly set result to 1
-                sprintf(buffer, "%d", res.result);
-                sendMessage(socket_fd, buffer, strlen(buffer)+1);
             } else {
                 res.result = 0;
-                sprintf(buffer, "%d", res.result);
-                sendMessage(socket_fd, buffer, strlen(buffer)+1);
+            }
+            sprintf(buffer, "%d", res.result);
+            if (sendMessage(socket_fd, buffer, strlen(buffer)+1) == -1) {
+                perror("Error sending result code of init in server.\n");
             }
             break;
         case 4:                                     // if operation == 4 call delete_key()
@@ -257,12 +283,12 @@ int treat_message(int * msocket_fd) {
             result = delete_key(pet.key);
             if (result == 0) {                      // if delete_key ended correctly set result to 1
                 res.result = 1;
-                sprintf(buffer, "%d", res.result);
-                sendMessage(socket_fd, buffer, strlen(buffer)+1);
             } else {
                 res.result = 0;
-                sprintf(buffer, "%d", res.result);
-                sendMessage(socket_fd, buffer, strlen(buffer)+1);
+            }
+            sprintf(buffer, "%d", res.result);
+            if (sendMessage(socket_fd, buffer, strlen(buffer)+1) == -1) {
+                perror("Error sending result code of delete_key in server.\n");
             }
             break;
         case 5:                                     // if operation == 5 call exist()
@@ -274,12 +300,14 @@ int treat_message(int * msocket_fd) {
             result = exist(pet.key);
             if (result == 1) {                      // if exist ended correctly set result to 1
                 res.result = 1;
-                sprintf(buffer, "%d", res.result);
-                sendMessage(socket_fd, buffer, strlen(buffer)+1);
-            } else {
+            } else if (result == 0){
                 res.result = 0;
-                sprintf(buffer, "%d", res.result);
-                sendMessage(socket_fd, buffer, strlen(buffer)+1);
+            } else {
+                res.result = -1;
+            }
+            sprintf(buffer, "%d", res.result);
+            if (sendMessage(socket_fd, buffer, strlen(buffer)+1) == -1) {
+                perror("Error sending result code of exist in server.\n");
             }
             break;
         case 6:                                     // if operation == 6 call copy_key()
@@ -293,19 +321,21 @@ int treat_message(int * msocket_fd) {
             result = copy_key(pet.key, pet.key2);
             if (result == 0) {                      // if copy_key ended correctly set result to 1
                 res.result = 1;
-                sprintf(buffer, "%d", res.result);
-                sendMessage(socket_fd, buffer, strlen(buffer)+1);
             } else {
                 res.result = 0;
-                sprintf(buffer, "%d", res.result);
-                sendMessage(socket_fd, buffer, strlen(buffer)+1);
+            }
+            sprintf(buffer, "%d", res.result);
+            if (sendMessage(socket_fd, buffer, strlen(buffer)+1) == -1) {
+                perror("Error sending result code of init in server.\n");
             }
             break;
         default:
             break;
     }
 
+    
     close(socket_fd);
+    printf("Connection socket closed.\n");
     return 0;
     // pthread_exit(0);
 }

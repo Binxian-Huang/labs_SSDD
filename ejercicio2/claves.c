@@ -13,8 +13,9 @@
 #include "claves.h"
 
 int enable_connection() {
+    int socket_fd;
     struct sockaddr_in server_addr;
-    short server_port = 8005;
+    short server_port = 8081;
     struct hostent *server;
     char *server_name = "localhost";
 
@@ -40,7 +41,7 @@ int sendMessage(int socket_fd, char *buffer, int size) {
     int bytes_sent;
     int bytes_left = size;
 
-    printf("Valor a enviar: %s\n", buffer);
+    printf("Valor a enviar: %s.\n", buffer);
     do {
         bytes_sent = write(socket_fd, buffer, bytes_left);
         bytes_left = bytes_left - bytes_sent;
@@ -48,10 +49,8 @@ int sendMessage(int socket_fd, char *buffer, int size) {
     } while ((bytes_sent >=0) && (bytes_left > 0));
 
     if (bytes_sent < 0) {
-        printf("Error al enviar bytes.\n");
         return -1;
     } else {
-        printf("Todos los bytes mandados.\n");
         return 0;
     }
 }
@@ -99,6 +98,7 @@ ssize_t readLine(int socket_fd, char *buffer, size_t size) {
         }
     }
     *buf = '\0';
+    printf("Value: %s\n", buffer);
     return totRead;
 }
 
@@ -109,18 +109,26 @@ int init() {            // function that sends the message of the init operation
     int sc = enable_connection();
     
     sprintf(buffer, "%d", operation_code);
-    sendMessage(sc, buffer, strlen(buffer)+1);
+    if (sendMessage(sc, buffer, strlen(buffer)+1) == -1) {
+        perror("Error sending operation code of init in client.\n");
+        return -1;
+    }
+
     printf("init message sent\n");
 
-    readLine(sc, buffer, 256);
+    if (readLine(sc, buffer, 256) == -1) {
+        perror("Error reading init response in client.\n");
+        return -1;
+    }
     res.result = atoi(buffer);
     close(sc);
+    printf("Conection socket closed.\n");
     printf("init response received\n");
     
     if (res.result == 1) {
-        return 0;
+        return 0;           // init ok
     } else {
-        return 1;
+        return -1;           // init error
     }
 }
 
@@ -130,32 +138,45 @@ int set_value(int key, char *value1, int value2, double value3) {           // f
     int operation_code = 1;
     int sc = enable_connection();
 
-    printf("antes 1 \n");
     sprintf(buffer, "%d", operation_code);
-    sendMessage(sc, buffer, strlen(buffer)+1);
-    printf("antes 2 \n");
+    if (sendMessage(sc, buffer, strlen(buffer)+1) == -1) {
+        perror("Error sending operation code of set_value in client.\n");
+        return -1;
+    }
     sprintf(buffer, "%d", key);
-    sendMessage(sc, buffer, strlen(buffer)+1);
-    printf("antes 3 \n");
-    sendMessage(sc, value1, strlen(value1)+1);
-    printf("antes 4 \n");
+    if (sendMessage(sc, buffer, strlen(buffer)+1) == -1) {
+        perror("Error sending key of set_value in client.\n");
+        return -1;
+    }
+    if (sendMessage(sc, value1, strlen(buffer)+1) == -1) {
+        perror("Error sending value1 of set_value in client.\n");
+        return -1;
+    }
     sprintf(buffer, "%d", value2);
-    sendMessage(sc, buffer, strlen(buffer)+1);
-    printf("antes 5 \n");
+    if (sendMessage(sc, buffer, strlen(buffer)+1) == -1) {
+        perror("Error sending value2 of set_value in client.\n");
+        return -1;
+    }
     sprintf(buffer, "%f", value3);
-    sendMessage(sc, buffer, strlen(buffer)+1);   
+    if (sendMessage(sc, buffer, strlen(buffer)+1) == -1) {
+        perror("Error sending value3 of set_value in client.\n");
+        return -1;
+    } 
     printf("set_value message sent\n");   
     fflush(stdout);                                           
 
-    readLine(sc, buffer, 256);
+    if (readLine(sc, buffer, 256) == -1) {
+        perror("Error reading set_value response in client.\n");
+        return -1;
+    }
     res.result = atoi(buffer);
     close(sc);
     printf("set_value response received\n");
 
     if (res.result == 1) {
-        return 1;
+        return 0;           // set_value ok
     } else {
-        return 0;
+        return -1;          // set_value error
     }
 }
 
@@ -166,25 +187,43 @@ int get_value(int key, char *value1, int *value2, double *value3) {         // f
     int sc = enable_connection();
 
     sprintf(buffer, "%d", operation_code);
-    sendMessage(sc, buffer, strlen(buffer)+1);
+    if (sendMessage(sc, buffer, strlen(buffer)+1) == -1) {
+        perror("Error sending operation code of get_value in client.\n");
+        return -1;
+    }
     sprintf(buffer, "%d", key);
-    sendMessage(sc, buffer, strlen(buffer)+1);
+    if (sendMessage(sc, buffer, strlen(buffer)+1) == -1) {
+        perror("Error sending key of get_value in client.\n");
+        return -1;
+    }
     printf("get_value message sent\n");
 
-    readLine(sc, buffer, 256);
+    if (readLine(sc, buffer, 256) == -1) {
+        perror("Error reading result code of get_value response in client.\n");
+        return -1;
+    }
     res.result = atoi(buffer);
-    readLine(sc, value1, 256);
-    readLine(sc, buffer, 256);
+    if (readLine(sc, value1, 256) == -1) {
+        perror("Error reading value1 of get_value response in client.\n");
+        return -1;
+    }
+    if (readLine(sc, buffer, 256) == -1) {
+        perror("Error reading value2 of get_value response in client.\n");
+        return -1;
+    }
     *value2 = atoi(buffer);
-    readLine(sc, buffer, 256);
+    if (readLine(sc, buffer, 256) == -1) {
+        perror("Error reading value3 of get_value response in client.\n");
+        return -1;
+    }
     *value3 = atof(buffer);
     close(sc);
     printf("get_value response received\n");
 
     if (res.result == 1) {
-        return 1;
+        return 0;           // get_value ok
     } else {
-        return 0;
+        return -1;          // get_value error
     }
 }
 
@@ -195,25 +234,43 @@ int modify_value(int key, char *value1, int value2, double value3) {        // f
     int sc = enable_connection();
 
     sprintf(buffer, "%d", operation_code);
-    sendMessage(sc, buffer, strlen(buffer)+1);
+    if (sendMessage(sc, buffer, strlen(buffer)+1) == -1) {
+        perror("Error sending operation code of modify_value in client.\n");
+        return -1;
+    }
     sprintf(buffer, "%d", key);
-    sendMessage(sc, buffer, strlen(buffer)+1);
-    sendMessage(sc, value1, strlen(value1)+1);
+    if (sendMessage(sc, buffer, strlen(buffer)+1) == -1) {
+        perror("Error sending key of modify_value in client.\n");
+        return -1;
+    }
+    if (sendMessage(sc, value1, strlen(buffer)+1) == -1) {
+        perror("Error sending value1 of modify_value in client.\n");
+        return -1;
+    }
     sprintf(buffer, "%d", value2);
-    sendMessage(sc, buffer, strlen(buffer)+1);
+    if (sendMessage(sc, buffer, strlen(buffer)+1) == -1) {
+        perror("Error sending value2 of modify_value in client.\n");
+        return -1;
+    }
     sprintf(buffer, "%f", value3);
-    sendMessage(sc, buffer, strlen(buffer)+1);
+    if (sendMessage(sc, buffer, strlen(buffer)+1) == -1) {
+        perror("Error sending of value3 of modify_value in client.\n");
+        return -1;
+    }
     printf("modify_value message sent\n");
 
-    readLine(sc, buffer, 256);
+    if (readLine(sc, buffer, 256) == -1) {
+        perror("Error reading modify_value response in client.\n");
+        return -1;
+    }
     res.result = atoi(buffer);
     close(sc);
     printf("modify_value response received\n");
 
     if (res.result == 1) {
-        return 1;
+        return 0;           // modify_value ok
     } else {
-        return 0;
+        return -1;          // modify_value error
     }
 }
 
@@ -224,18 +281,27 @@ int delete_key(int key) {                                        // function tha
     int sc = enable_connection();
 
     sprintf(buffer, "%d", operation_code);
-    sendMessage(sc, buffer, strlen(buffer)+1);
+    if (sendMessage(sc, buffer, strlen(buffer)+1) == -1) {
+        perror("Error sending operation code of delete_key in client.\n");
+        return -1;
+    }
     sprintf(buffer, "%d", key);
-    sendMessage(sc, buffer, strlen(buffer)+1);
+    if (sendMessage(sc, buffer, strlen(buffer)+1) == -1) {
+        perror("Error sending key of delete_key in client.\n");
+        return -1;
+    }
     printf("delete_key message sent\n");
 
-    readLine(sc, buffer, 256);
+    if (readLine(sc, buffer, 256) == -1) {
+        perror("Error reading delete_key response in client.\n");
+        return -1;
+    }
     res.result = atoi(buffer);
     printf("delete_key response received\n");
     if (res.result == 1) {
-        return 1;
+        return 0;           // delete_key ok
     } else {
-        return 0;
+        return -1;          // delete_key error
     }
 }
 
@@ -246,20 +312,31 @@ int exist(int key) {                                // function that sends the m
     int sc = enable_connection();
 
     sprintf(buffer, "%d", operation_code);
-    sendMessage(sc, buffer, strlen(buffer)+1);
+    if (sendMessage(sc, buffer, strlen(buffer)+1) == -1) {
+        perror("Error sending operation code of exist in client.\n");
+        return -1;
+    }
     sprintf(buffer, "%d", key);
-    sendMessage(sc, buffer, strlen(buffer)+1);
+    if (sendMessage(sc, buffer, strlen(buffer)+1) == -1) {
+        perror("Error sending key of exist in client.\n");
+        return -1;
+    }
     printf("exist message sent\n");
     
-    readLine(sc, buffer, 256);
+    if (readLine(sc, buffer, 256) == -1) {
+        perror("Error reading exist response in client.\n");
+        return -1;
+    }
     res.result = atoi(buffer);
     close(sc);
     printf("exist response received\n");
     
     if (res.result == 1) {
-        return 1;
+        return 1;           // exist
+    } else if (res.result == 0) {
+        return 0;           // not exist
     } else {
-        return 0;
+        return -1;          // exist error
     }
 }
 
@@ -270,21 +347,33 @@ int copy_key(int key1, int key2) {                      // function that sends t
     int sc = enable_connection();
 
     sprintf(buffer, "%d", operation_code);
-    sendMessage(sc, buffer, strlen(buffer)+1);
+    if (sendMessage(sc, buffer, strlen(buffer)+1) == -1) {
+        perror("Error sending operation code of copy_key in client.\n");
+        return -1;
+    }
     sprintf(buffer, "%d", key1);
-    sendMessage(sc, buffer, strlen(buffer)+1);
+    if (sendMessage(sc, buffer, strlen(buffer)+1) == -1) {
+        perror("Error sending key1 of copy_key in client.\n");
+        return -1;
+    }
     sprintf(buffer, "%d", key2);
-    sendMessage(sc, buffer, strlen(buffer)+1);
+    if (sendMessage(sc, buffer, strlen(buffer)+1) == -1) {
+        perror("Error sending key2 of copy_key in client.\n");
+        return -1;
+    }
     printf("copy_key message sent\n");
     
-    readLine(sc, buffer, 256);
+    if (readLine(sc, buffer, 256) == -1) {
+        perror("Error reading copy_key response in client.\n");
+        return -1;
+    }
     res.result = atoi(buffer);
     close(sc);
     printf("copy_key response received\n");
 
     if (res.result == 1) {
-        return 1;
+        return 0;           // copy_key ok
     } else {
-        return 0;
+        return -1;          // copy_key error
     }
 }

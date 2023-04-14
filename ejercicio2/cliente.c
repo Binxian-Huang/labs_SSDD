@@ -10,7 +10,7 @@ int main(int argc, char *argv[]) {
     int res;
 
     if (argc != 1){
-        printf("Usage: ./cliente. IP address 127.0.0.1 and port 8080 already set.");
+        printf("Usage: ./cliente. IP address and port already set.");
     }
 
     printf("These are the operations you can use:\n");
@@ -51,7 +51,7 @@ int main(int argc, char *argv[]) {
             } else {
                 printf("key: %d, value1: %s, value2: %d, value3: %lf.\n", pet.key, pet.value1, pet.value2, pet.value3);
                 res = set_value(pet.key, pet.value1, pet.value2, pet.value3);
-                if (res == 1) {
+                if (res == 0) {
                     printf("The value with key %d set correctly.\n", pet.key);
                 } else {
                     printf("An error ocurred while setting the value with key %d.\n", pet.key);
@@ -66,7 +66,7 @@ int main(int argc, char *argv[]) {
             } else {
                 printf("key: %d.\n", pet.key);
                 res = get_value(pet.key, pet.value1, &pet.value2, &pet.value3);
-                if (res == 1) {
+                if (res == 0) {
                     printf("The value with key %d is: %s %d %f\n", pet.key, pet.value1, pet.value2, pet.value3);
                 } else {
                     printf("An error ocurred while getting the value with key %d.\n", pet.key);
@@ -80,7 +80,7 @@ int main(int argc, char *argv[]) {
             } else {
                 printf("key: %d, value1: %s, value2: %d, value3: %lf.\n", pet.key, pet.value1, pet.value2, pet.value3);
                 res = modify_value(pet.key, pet.value1, pet.value2, pet.value3);
-                if (res == 1) {
+                if (res == 0) {
                     printf("The value with key %d modified correctly.\n", pet.key);
                 } else {
                     printf("An error ocurred while modifying the value with key %d.\n", pet.key);
@@ -95,7 +95,7 @@ int main(int argc, char *argv[]) {
             } else {
                 printf("key: %d.\n", pet.key);
                 res = delete_key(pet.key);
-                if (res == 1) {
+                if (res == 0) {
                     printf("The value with key %d deleted correctly.\n", pet.key);
                 } else {
                     printf("An error ocurred while deleting the value with key %d.\n", pet.key);
@@ -112,8 +112,10 @@ int main(int argc, char *argv[]) {
                 res = exist(pet.key);
                 if (res == 1) {
                     printf("The value with key %d exists.\n", pet.key);
-                } else {
+                } else if (res == 0){
                     printf("The value with key %d does not exist.\n", pet.key);
+                } else {
+                    printf("An error ocurred while checking if the value with key %d exists.\n", pet.key);
                 }
             }
         } else if (pet.operation == 6) { // copy_key
