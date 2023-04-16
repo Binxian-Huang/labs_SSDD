@@ -45,11 +45,11 @@ int main(int argc, char *argv[]) {
             }
         } else if (pet.operation == 1) { // set_value
             printf("Arguments for set_value: ");
-            if (scanf("%d \"%[^\"]\" %d %lf", &pet.key, pet.value1, &pet.value2, &pet.value3) != 4) {  //  key value1 value2 value3
+            fgets(input, sizeof(input), stdin);
+            if (sscanf(input, "%d \"%[^\"]\" %d %lf", &pet.key, pet.value1, &pet.value2, &pet.value3) != 4) {  //  key value1 value2 value3
                 perror("Wrong number of arguments on set_value.\n");
                 continue;
             } else {
-                printf("key: %d, value1: %s, value2: %d, value3: %lf.\n", pet.key, pet.value1, pet.value2, pet.value3);
                 res = set_value(pet.key, pet.value1, pet.value2, pet.value3);
                 if (res == 0) {
                     printf("The value with key %d set correctly.\n", pet.key);
@@ -64,7 +64,6 @@ int main(int argc, char *argv[]) {
                 perror("Wrong number of arguments on get_value.\n");
                 continue;
             } else {
-                printf("key: %d.\n", pet.key);
                 res = get_value(pet.key, pet.value1, &pet.value2, &pet.value3);
                 if (res == 0) {
                     printf("The value with key %d is: %s %d %f\n", pet.key, pet.value1, pet.value2, pet.value3);
@@ -78,7 +77,6 @@ int main(int argc, char *argv[]) {
                 perror("Wrong number of arguments on modify_value.\n");
                 continue;
             } else {
-                printf("key: %d, value1: %s, value2: %d, value3: %lf.\n", pet.key, pet.value1, pet.value2, pet.value3);
                 res = modify_value(pet.key, pet.value1, pet.value2, pet.value3);
                 if (res == 0) {
                     printf("The value with key %d modified correctly.\n", pet.key);
@@ -93,7 +91,6 @@ int main(int argc, char *argv[]) {
                 perror("Wrong number of arguments on delete_key.\n");
                 continue;
             } else {
-                printf("key: %d.\n", pet.key);
                 res = delete_key(pet.key);
                 if (res == 0) {
                     printf("The value with key %d deleted correctly.\n", pet.key);
@@ -108,7 +105,6 @@ int main(int argc, char *argv[]) {
                 perror("Wrong number of arguments on exist.\n");
                 continue;
             } else {
-                printf("key: %d.\n", pet.key);
                 res = exist(pet.key);
                 if (res == 1) {
                     printf("The value with key %d exists.\n", pet.key);
@@ -125,7 +121,6 @@ int main(int argc, char *argv[]) {
                 perror("Wrong number of arguments on copy_key.\n");
                 continue;
             } else {
-                printf("key1: %d, key2: %d.\n", pet.key, pet.key2);
                 res = copy_key(pet.key, pet.key2);
                 if (res == 0) {
                     printf("The value with key %d copied correctly to key %d.\n", pet.key, pet.key2);

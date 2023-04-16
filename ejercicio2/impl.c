@@ -9,6 +9,7 @@ double array_value3;
 char array_value1[256];
 
 int init() {
+    FILE *file;
     file = fopen("arrays.txt", "w");
     if (file == NULL) {
         perror("Error opening file on init.");
@@ -19,6 +20,12 @@ int init() {
 }
 
 int set_value(int key, char *value1, int value2, double value3) {
+    FILE *file;
+    int array_key, array_value2;
+    char array_value1[256];
+    double array_value3;
+    
+
     if (exist(key)) {                                           // if key already exists, return error 
         perror("Key already exists on set_value.");
         return -1;
@@ -36,13 +43,18 @@ int set_value(int key, char *value1, int value2, double value3) {
 
     fprintf(file, "%d %s %d %f\n", array_key, array_value1, array_value2, array_value3);            // write the tuple in the position that was opened, a line for each tuple
 
-    printf("Valor guardado correctamente: %d %s %d %f\n", array_key, array_value1, array_value2, array_value3);
+    printf("Value set correctly: %d %s %d %f\n", array_key, array_value1, array_value2, array_value3);
 
     fclose(file);
     return 0;
 }
 
 int get_value(int key, char *value1, int *value2, double *value3) {
+    FILE *file;
+    int array_key, array_value2;
+    char array_value1[256];
+    double array_value3;
+
     if (!exist(key)) {                                        // if key does not exist, return error
         perror("Key does not exist on get_value.");
         return -1;
@@ -70,6 +82,11 @@ int get_value(int key, char *value1, int *value2, double *value3) {
 }
 
 int modify_value(int key, char *value1, int value2, double value3) {
+    FILE *file;
+    int array_key, array_value2;
+    char array_value1[256];
+    double array_value3;
+
     if (!exist(key)) {                                      // if key does not exist, return error                
         perror("Key does not exist on modify_value.");
         return -1;
@@ -99,7 +116,12 @@ int modify_value(int key, char *value1, int value2, double value3) {
     return 0;
 }
 
-int delete_key(int key) {                                   
+int delete_key(int key) {    
+    FILE *file;
+    int array_key, array_value2;
+    char array_value1[256];
+    double array_value3;
+
     if (!exist(key)) {                                      // if key does not exist, return error
         perror("Key does not exist on delete_key.");
         return -1;
@@ -128,6 +150,8 @@ int delete_key(int key) {
 }
 
 int exist(int key) {
+    FILE *file;
+    
     file = fopen("arrays.txt", "r");                        // open file to read
     if (file == NULL) {
         perror("Error opening file on exist.");
@@ -154,6 +178,10 @@ int exist(int key) {
 }
 
 int copy_key(int key1, int key2) {
+    char array_value1[256];
+    int array_value2;
+    double array_value3;
+
     if (!exist(key1)) {                                     // if key1 does not exist, return error
         perror("Key1 does not exist on copy_key.");
         return -1;

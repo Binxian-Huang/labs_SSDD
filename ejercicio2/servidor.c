@@ -26,7 +26,7 @@ int main() {
         perror("Error creating socket on server.");
         exit(1);
     } else {
-        printf("Socket created.\n");
+        printf("Server socket created.\n");
     }
 
     if (setsockopt(socket_fd, SOL_SOCKET, SO_REUSEADDR, (void *)&val, sizeof(val)) == -1) {
@@ -36,15 +36,14 @@ int main() {
 
     bzero((char *) &server_addr, sizeof(server_addr));
     server_addr.sin_family = AF_INET;
-    server_addr.sin_port = htons(8081);
+    server_addr.sin_port = htons(8000);
     server_addr.sin_addr.s_addr = INADDR_ANY;
 
     if (bind(socket_fd, (struct sockaddr *) &server_addr, sizeof(server_addr)) == -1) {
         perror("Error binding socket on server.");
         exit(1);
     } else {
-        printf("Socket binded.\n");
-        // fflush(stdout);
+        printf("Server socket binded.\n");
     }
 
     if (listen(socket_fd, SOMAXCONN) == -1) {
@@ -52,7 +51,6 @@ int main() {
         exit(1);
     } else {
         printf("Listening on port %d.\n", ntohs(server_addr.sin_port));
-        // fflush(stdout);
     }
     
     size = sizeof(client_addr);
@@ -67,9 +65,7 @@ int main() {
             printf("Connection accepted.\n");
         }
         
-        printf("Entering treat_message\n");
         treat_message(&new_socket_fd);
-        printf("Exited treat_message\n");
 
         // if (pthread_create(&t_id, &t_attr, (void *)treat_message, (void *)&new_socket_fd) == 0) {
         //     printf("Thread created for client_%d.\n", getpid());
@@ -94,7 +90,6 @@ int sendMessage(int socket_fd, char *buffer, int size) {
     int bytes_sent;
     int bytes_left = size;
 
-    printf("Valor a enviar: %s.\n", buffer);
     do {
         bytes_sent = write(socket_fd, buffer, bytes_left);
         bytes_left = bytes_left - bytes_sent;
@@ -102,10 +97,8 @@ int sendMessage(int socket_fd, char *buffer, int size) {
     } while ((bytes_sent >=0) && (bytes_left > 0));
 
     if (bytes_sent < 0) {
-        printf("Error al enviar bytes.\n");
         return -1;
     } else {
-        printf("Todos los bytes mandados.\n");
         return 0;
     }
 }
@@ -153,13 +146,11 @@ ssize_t readLine(int socket_fd, char *buffer, size_t size) {
         }
     }
     *buf = '\0';
-    printf("Value: %s\n", buffer);
     return totRead;
 }
 
 // int treat_message(void *new_socket_fd) {
 int treat_message(int * msocket_fd) {
-    printf("Entered treat_message\n");
     char buffer[256];
     int socket_fd = *msocket_fd;
     // pthread_mutex_lock(&mutex_mensaje);
@@ -171,132 +162,195 @@ int treat_message(int * msocket_fd) {
     int result;
     struct petition pet;
     struct result res;
-    printf("E./n");
-    printf("Waiting message./n");
-    fflush(stdout);
-    readLine(socket_fd, buffer, 256);
-    pet.operation = atoi(buffer);
-    printf("Operation code received on server: %d\n", pet.operation);
+    if (readLine(socket_fd, buffer, 256) == -1) {
+        perror("Error reading operation code from client.\n");
+    } else{
+        pet.operation = atoi(buffer);
+        printf("Operation code received on server: %d\n", pet.operation);
+    }
+
     switch (pet.operation) {
         case 0:                                     // if operation == 0 call init()
-            printf("Before init server\n");
             result = init();
-            printf("Resultado: %d\n", result);
             if (result == 0) {
                 res.result = 1;                     // if init ended correctly set result to 1
             } else {
                 res.result = 0;
             }
+
             sprintf(buffer, "%d", res.result);
             if (sendMessage(socket_fd, buffer, strlen(buffer)+1) == -1) {
-                perror("Error sending result code of init in server.\n");
+                perror("Error sending init response result in server.\n");
+            } else {
+                printf("Init response result sent correctly with value: %d\n", res.result);
             }
-            printf("Init response sent from server.\n");
             break;
-        case 1:   
-            fprintf(stderr, "Antes readline\n") ;                                 // if operation == 1 call set_value()
-            readLine(socket_fd, buffer, 256);
-            pet.key = atoi(buffer);
-            fprintf(stderr, "Antes readline\n") ;  
-            readLine(socket_fd, pet.value1, 256);
-            fprintf(stderr, "Antes readline\n") ;  
-            readLine(socket_fd, buffer, 256);
-            pet.value2 = atoi(buffer);
-            fprintf(stderr, "Antes readline\n") ;  
-            readLine(socket_fd, buffer, 256);
-            pet.value3 = atof(buffer);
+        case 1:                                     // if operation == 1 call set_value()
+            if (readLine(socket_fd, buffer, 256) == -1) {
+                perror("Error reading key of set_value petition in server.\n");
+            } else {
+                pet.key = atoi(buffer);
+                printf("Key of set_value petition received on server with value: %d\n", pet.key);
+            }
 
-            printf("Before set_value server\n");
-            printf("Key: %d, Value1: %s, Value2: %d, Value3: %lf\n", pet.key, pet.value1, pet.value2, pet.value3);
+            if (readLine(socket_fd, pet.value1, 256) == -1) {
+                perror("Error reading value1 of set_value petition in server.\n");
+            } else {
+                printf("Value1 of set_value petition received on server with value: %s\n", pet.value1);
+            }
+
+            if (readLine(socket_fd, buffer, 256) == -1) {
+                perror("Error reading value2 of set_value petition in server.\n");
+            } else {
+                pet.value2 = atoi(buffer);
+                printf("Value2 of set_value petition received on server with value: %d\n", pet.value2);
+            }
+
+            if (readLine(socket_fd, buffer, 256) == -1) {
+                perror("Error reading value3 of set_value petition in server.\n");
+            } else {
+                pet.value3 = atof(buffer);
+                printf("Value3 of set_value petition received on server with value: %lf\n", pet.value3);
+            }
+
+            printf("Key to set: %d, Value1: %s, Value2: %d, Value3: %lf\n", pet.key, pet.value1, pet.value2, pet.value3);
             result = set_value(pet.key, pet.value1, pet.value2, pet.value3);
             if (result == 0) {
                 res.result = 1;                     // if set_value ended correctly set result to 1
             } else {
                 res.result = 0;
             }
+
             sprintf(buffer, "%d", res.result);
             if (sendMessage(socket_fd, buffer, strlen(buffer)+1) == -1) {
                 perror("Error sending result code of set_value in server.\n");
+            } else {
+                printf("Set_value response result sent correctly with value: %d\n", res.result);
             }
-            printf("set_value response sent from server (%d)\n",result);
             break;
         case 2:                                     // if operation == 2 call get_value()
-            readLine(socket_fd, buffer, 256);
-            pet.key = atoi(buffer);
+            if (readLine(socket_fd, buffer, 256) == -1) {
+                perror("Error reading key of get_value petition in server.\n");
+            } else {
+                pet.key = atoi(buffer);
+                printf("Key of get_value petition received on server with value: %d\n", pet.key);
+            }
 
-            printf("Before get_value server\n");
-            printf("Key: %d\n", pet.key);
+            printf("Key to get: %d\n", pet.key);
             result = get_value(pet.key, res.value1, &res.value2, &res.value3);
             if (result == 0) {
                 res.result = 1;                     // if get_value ended correctly set result to 1
                 sprintf(buffer, "%d", res.result);
                 if (sendMessage(socket_fd, buffer, strlen(buffer)+1) == -1) {
                     perror("Error sending result code of get_value in server.\n");
+                } else {
+                    printf("Get_value response result sent correctly with value: %d\n", res.result);
                 }
-                if (sendMessage(socket_fd, res.value1, strlen(buffer)+1) == -1) {
+
+                if (sendMessage(socket_fd, res.value1, strlen(res.value1)+1) == -1) {
                     perror("Error sending value1 of get_value in server.\n");
+                } else {
+                    printf("Get_value response value1 sent correctly with value: %s\n", res.value1);
                 }
+
                 sprintf(buffer, "%d", res.value2);
                 if (sendMessage(socket_fd, buffer, strlen(buffer)+1) == -1) {
                     perror("Error sending value2 of get_value in server.\n");
+                } else {
+                    printf("Get_value response value2 sent correctly with value: %d\n", res.value2);
                 }
+
                 sprintf(buffer, "%f", res.value3);
                 if (sendMessage(socket_fd, buffer, strlen(buffer)+1) == -1) {
                     perror("Error sending value3 of get_value in server.\n");
+                } else {
+                    printf("Get_value response value3 sent correctly with value: %f\n", res.value3);
                 }
             } else {
                 res.result = 0;
                 sprintf(buffer, "%d", res.result);
                 if (sendMessage(socket_fd, buffer, strlen(buffer)+1) == -1) {
                     perror("Error sending result code of get_value in server.\n");
+                } else {
+                    printf("Get_value response result sent correctly with value: %d\n", res.result);
                 }
             }
             break;
         case 3:                                     // if operation == 3 call modify_value()
-            readLine(socket_fd, buffer, 256);
-            pet.key = atoi(buffer);
-            readLine(socket_fd, pet.value1, 256);
-            readLine(socket_fd, buffer, 256);
-            pet.value2 = atoi(buffer);
-            readLine(socket_fd, buffer, 256);
-            pet.value3 = atof(buffer);
+            if (readLine(socket_fd, buffer, 256) == -1) {
+                perror("Error reading key of modify_value petition in server.\n");
+            } else {
+                pet.key = atoi(buffer);
+                printf("Key of modify_value petition received on server with value: %d\n", pet.key);
+            }
+            
+            if (readLine(socket_fd, pet.value1, 256) == -1) {
+                perror("Error reading value1 of modify_value petition in server.\n");
+            } else {
+                printf("Value1 of modify_value petition received on server with value: %s\n", pet.value1);
+            }
 
-            printf("Before modify_value server\n");
-            printf("Key: %d, Value1: %s, Value2: %d, Value3: %lf\n", pet.key, pet.value1, pet.value2, pet.value3);
+            if (readLine(socket_fd, buffer, 256) == -1) {
+                perror("Error reading value2 of modify_value petition in server.\n");
+            } else {
+                pet.value2 = atoi(buffer);
+                printf("Value2 of modify_value petition received on server with value: %d\n", pet.value2);
+            }
+
+            if (readLine(socket_fd, buffer, 256) == -1) {
+                perror("Error reading value3 of modify_value petition in server.\n");
+            } else {
+                pet.value3 = atof(buffer);
+                printf("Value3 of modify_value petition received on server with value: %lf\n", pet.value3);
+            }
+
+            printf("Key to modify: %d, Value1: %s, Value2: %d, Value3: %lf\n", pet.key, pet.value1, pet.value2, pet.value3);
             result = modify_value(pet.key, pet.value1, pet.value2, pet.value3);
             if (result == 0) {
                 res.result = 1;                     // if modify_value ended correctly set result to 1
             } else {
                 res.result = 0;
             }
+
             sprintf(buffer, "%d", res.result);
             if (sendMessage(socket_fd, buffer, strlen(buffer)+1) == -1) {
                 perror("Error sending result code of init in server.\n");
+            } else {
+                printf("Modify_value response result sent correctly with value: %d\n", res.result);
             }
             break;
         case 4:                                     // if operation == 4 call delete_key()
-            readLine(socket_fd, buffer, 256);
-            pet.key = atoi(buffer);
+            if (readLine(socket_fd, buffer, 256) == -1) {
+                perror("Error reading key of delete_key petition in server.\n");
+            } else {
+                pet.key = atoi(buffer);
+                printf("Key of delete_key petition received on server with value: %d\n", pet.key);
+            }
 
-            printf("Before delete_key server\n");
-            printf("Key: %d\n", pet.key);
+            printf("Key to delete: %d\n", pet.key);
             result = delete_key(pet.key);
             if (result == 0) {                      // if delete_key ended correctly set result to 1
                 res.result = 1;
             } else {
                 res.result = 0;
             }
+
             sprintf(buffer, "%d", res.result);
             if (sendMessage(socket_fd, buffer, strlen(buffer)+1) == -1) {
                 perror("Error sending result code of delete_key in server.\n");
+            } else {
+                printf("Delete_key response result sent correctly with value: %d\n", res.result);
             }
             break;
         case 5:                                     // if operation == 5 call exist()
-            readLine(socket_fd, buffer, 256);
-            pet.key = atoi(buffer);
+            if (readLine(socket_fd, buffer, 256) == -1) {
+                perror("Error reading key of exist petition in server.\n");
+            } else {
+                pet.key = atoi(buffer);
+                printf("Key of exist petition received on server with value: %d\n", pet.key);
+            }
 
-            printf("Before exist server\n");
-            printf("Key: %d\n", pet.key);
+            printf("Key to verify if exist: %d\n", pet.key);
             result = exist(pet.key);
             if (result == 1) {                      // if exist ended correctly set result to 1
                 res.result = 1;
@@ -305,37 +359,53 @@ int treat_message(int * msocket_fd) {
             } else {
                 res.result = -1;
             }
+
             sprintf(buffer, "%d", res.result);
             if (sendMessage(socket_fd, buffer, strlen(buffer)+1) == -1) {
                 perror("Error sending result code of exist in server.\n");
+            } else {
+                printf("Exist response result sent correctly with value: %d\n", res.result);
             }
             break;
         case 6:                                     // if operation == 6 call copy_key()
-            readLine(socket_fd, buffer, 256);
-            pet.key = atoi(buffer);
-            readLine(socket_fd, buffer, 256);
-            pet.key2 = atoi(buffer);
+            if (readLine(socket_fd, buffer, 256) == -1) {
+                perror("Error reading key1 of copy_key petition in server.\n");
+            } else {
+                pet.key = atoi(buffer);
+                printf("Key1 of copy_key petition received on server with value: %d\n", pet.key);
+            }
 
-            printf("Before copy_key server\n");
-            printf("Key: %d, Key2: %d\n", pet.key, pet.key2);
+            if (readLine(socket_fd, buffer, 256) == -1) {
+                perror("Error reading key2 of copy_key petition in server.\n");
+            } else {
+                pet.key2 = atoi(buffer);
+                printf("Key2 of copy_key petition received on server with value: %d\n", pet.key2);
+            }
+
+            printf("Key to copy for: %d. Key to copy at: %d.\n", pet.key, pet.key2);
             result = copy_key(pet.key, pet.key2);
             if (result == 0) {                      // if copy_key ended correctly set result to 1
                 res.result = 1;
             } else {
                 res.result = 0;
             }
+
             sprintf(buffer, "%d", res.result);
             if (sendMessage(socket_fd, buffer, strlen(buffer)+1) == -1) {
                 perror("Error sending result code of init in server.\n");
+            } else {
+                printf("Copy_key response result sent correctly with value: %d\n", res.result);
             }
             break;
         default:
             break;
     }
 
-    
-    close(socket_fd);
-    printf("Connection socket closed.\n");
+    if (close(socket_fd) == -1) {
+        perror("Error closing connection socket in server.\n");
+    } else {
+        printf("Connection socket closed in server.\n");
+    }
     return 0;
     // pthread_exit(0);
 }
