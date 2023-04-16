@@ -4,13 +4,14 @@
 #include <ctype.h>
 #include "claves.h"
 
-
+/* export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:. */
+/* env IP_TUPLAS=localhost PORT_TUPLAS=8080 ./cliente */
 int main(int argc, char *argv[]) {
     struct petition pet;
     int res;
 
     if (argc != 1){
-        printf("Usage: ./cliente. IP address and port already set.");
+        printf("Usage: ./cliente\n");
     }
 
     printf("These are the operations you can use:\n");

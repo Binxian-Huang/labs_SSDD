@@ -14,13 +14,18 @@ pthread_mutex_t mutex_mensaje = PTHREAD_MUTEX_INITIALIZER;
 pthread_cond_t cond_mensaje = PTHREAD_COND_INITIALIZER;
 int mensaje_no_copiado = 1;
 
-int main() {
-    // pthread_t t_id;
-    // pthread_attr_t t_attr;
+int main(int argc, char *argv[]) {
+    pthread_t t_id;
+    pthread_attr_t t_attr;
     struct sockaddr_in server_addr, client_addr;
     socklen_t size;
     int socket_fd, new_socket_fd;
     int val = 1;
+
+    if argc != 2 {
+        printf("Usage: ./servidor <port>\n");
+        exit(1);
+    }
 
     if ((socket_fd = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
         perror("Error creating socket on server.");
@@ -36,7 +41,7 @@ int main() {
 
     bzero((char *) &server_addr, sizeof(server_addr));
     server_addr.sin_family = AF_INET;
-    server_addr.sin_port = htons(8000);
+    server_addr.sin_port = htons(atoi(argv[1]));
     server_addr.sin_addr.s_addr = INADDR_ANY;
 
     if (bind(socket_fd, (struct sockaddr *) &server_addr, sizeof(server_addr)) == -1) {
@@ -55,8 +60,8 @@ int main() {
     
     size = sizeof(client_addr);
     while (1) {
-        // pthread_attr_init(&t_attr);
-        // pthread_attr_setdetachstate(&t_attr, PTHREAD_CREATE_DETACHED);
+        pthread_attr_init(&t_attr);
+        pthread_attr_setdetachstate(&t_attr, PTHREAD_CREATE_DETACHED);
 
         if ((new_socket_fd = accept(socket_fd, (struct sockaddr *) &client_addr, (socklen_t *)&size)) == -1) {
             perror("Error accepting connection on server.");
@@ -64,21 +69,19 @@ int main() {
         } else {
             printf("Connection accepted.\n");
         }
-        
-        treat_message(&new_socket_fd);
 
-        // if (pthread_create(&t_id, &t_attr, (void *)treat_message, (void *)&new_socket_fd) == 0) {
-        //     printf("Thread created for client_%d.\n", getpid());
-        //     pthread_mutex_lock(&mutex_mensaje);
-        //     while (mensaje_no_copiado) {
-        //         pthread_cond_wait(&cond_mensaje, &mutex_mensaje);
-        //     }
-        //     mensaje_no_copiado = 1;
-        //     pthread_mutex_unlock(&mutex_mensaje);
-        // } else {
-        //     perror("Error creating thread.");
-        //     exit(1);
-        // }
+        if (pthread_create(&t_id, &t_attr, (void *)treat_message, (void *)&new_socket_fd) == 0) {
+            printf("Thread created for client_%d.\n", getpid());
+            pthread_mutex_lock(&mutex_mensaje);
+            while (mensaje_no_copiado) {
+                pthread_cond_wait(&cond_mensaje, &mutex_mensaje);
+            }
+            mensaje_no_copiado = 1;
+            pthread_mutex_unlock(&mutex_mensaje);
+        } else {
+            perror("Error creating thread.");
+            exit(1);
+        }
     }
 
     close(socket_fd);
@@ -149,15 +152,13 @@ ssize_t readLine(int socket_fd, char *buffer, size_t size) {
     return totRead;
 }
 
-// int treat_message(void *new_socket_fd) {
-int treat_message(int * msocket_fd) {
+int treat_message(void *new_socket_fd) {
     char buffer[256];
-    int socket_fd = *msocket_fd;
-    // pthread_mutex_lock(&mutex_mensaje);
-    //int socket_fd = *((int *) msocket_fd);
-    // mensaje_no_copiado = 0;
-    // pthread_cond_signal(&cond_mensaje);
-    // pthread_mutex_unlock(&mutex_mensaje);
+    pthread_mutex_lock(&mutex_mensaje);
+    int socket_fd = *((int *) new_socket_fd);
+    mensaje_no_copiado = 0;
+    pthread_cond_signal(&cond_mensaje);
+    pthread_mutex_unlock(&mutex_mensaje);
 
     int result;
     struct petition pet;
@@ -407,5 +408,5 @@ int treat_message(int * msocket_fd) {
         printf("Connection socket closed in server.\n");
     }
     return 0;
-    // pthread_exit(0);
+    pthread_exit(0);
 }

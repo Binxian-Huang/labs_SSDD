@@ -15,9 +15,18 @@
 int enable_connection() {
     int socket_fd;
     struct sockaddr_in server_addr;
-    short server_port = 8000;
+    short server_port;
+    char *server_name;
     struct hostent *server;
-    char *server_name = "localhost";
+    
+    if ((server_name = getenv("IP_TUPLAS")) == NULL) {
+        perror("Error getting server name on client.\n");
+        return -1;
+    }
+    if ((server_port = atoi(getenv("PORT_TUPLAS"))) == 0) {
+        perror("Error getting server port on client.\n");
+        return -1;
+    }
 
     if ((socket_fd = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
         perror("Error creating socket on client.\n");

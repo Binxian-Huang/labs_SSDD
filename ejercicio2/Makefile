@@ -5,7 +5,6 @@ CFLAGS=-g -Wall
 # Lista de ejecutables
 BIN_FILES=cliente servidor
 # Ninguna opción del preprocesador implementada
-#export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:. 
 
 all: $(BIN_FILES)
 
