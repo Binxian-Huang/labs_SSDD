@@ -22,7 +22,7 @@ int main(int argc, char *argv[]) {
     int socket_fd, new_socket_fd;
     int val = 1;
 
-    if argc != 2 {
+    if (argc != 2) {
         printf("Usage: ./servidor <port>\n");
         exit(1);
     }
