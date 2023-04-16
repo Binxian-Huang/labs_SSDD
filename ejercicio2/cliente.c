@@ -4,8 +4,7 @@
 #include <ctype.h>
 #include "claves.h"
 
-/* export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:. */
-/* env IP_TUPLAS=localhost PORT_TUPLAS=8080 ./cliente */
+/* env LD_LIBRARY_PATH=$LD_LIBRARY_PATH:. IP_TUPLAS=localhost PORT_TUPLAS=8080 ./cliente */
 int main(int argc, char *argv[]) {
     struct petition pet;
     int res;

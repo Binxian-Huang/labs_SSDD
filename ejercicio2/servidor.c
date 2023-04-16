@@ -152,7 +152,7 @@ ssize_t readLine(int socket_fd, char *buffer, size_t size) {
     return totRead;
 }
 
-int treat_message(void *new_socket_fd) {
+void treat_message(void *new_socket_fd) {
     char buffer[256];
     pthread_mutex_lock(&mutex_mensaje);
     int socket_fd = *((int *) new_socket_fd);
@@ -407,6 +407,6 @@ int treat_message(void *new_socket_fd) {
     } else {
         printf("Connection socket closed in server.\n");
     }
-    return 0;
+    return;
     pthread_exit(0);
 }
