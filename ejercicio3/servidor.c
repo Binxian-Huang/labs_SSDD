@@ -1,13 +1,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <pthread.h>
-#include <netdb.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include <sys/socket.h>
 #include <errno.h>
 #include <string.h>
 #include <unistd.h>
+#include <rpc/rpc.h>
 #include "servidor.h"
 
 pthread_mutex_t mutex_mensaje = PTHREAD_MUTEX_INITIALIZER;
@@ -17,58 +14,16 @@ int mensaje_no_copiado = 1;
 int main(int argc, char *argv[]) {
     pthread_t t_id;
     pthread_attr_t t_attr;
-    struct sockaddr_in server_addr, client_addr;
-    socklen_t size;
-    int socket_fd, new_socket_fd;
     int val = 1;
 
-    if (argc != 2) {
-        printf("Usage: ./servidor <port>\n");
+    if (argc != 1) {
+        printf("Usage: ./servidor\n");
         exit(1);
     }
 
-    if ((socket_fd = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
-        perror("Error creating socket on server.");
-        exit(1);
-    } else {
-        printf("Server socket created.\n");
-    }
-
-    if (setsockopt(socket_fd, SOL_SOCKET, SO_REUSEADDR, (void *)&val, sizeof(val)) == -1) {
-        perror("Error setting socket options on server.");
-        exit(1);
-    }
-
-    bzero((char *) &server_addr, sizeof(server_addr));
-    server_addr.sin_family = AF_INET;
-    server_addr.sin_port = htons(atoi(argv[1]));
-    server_addr.sin_addr.s_addr = INADDR_ANY;
-
-    if (bind(socket_fd, (struct sockaddr *) &server_addr, sizeof(server_addr)) == -1) {
-        perror("Error binding socket on server.");
-        exit(1);
-    } else {
-        printf("Server socket binded.\n");
-    }
-
-    if (listen(socket_fd, SOMAXCONN) == -1) {
-        perror("Error listening on server.");
-        exit(1);
-    } else {
-        printf("Listening on port %d.\n", ntohs(server_addr.sin_port));
-    }
-    
-    size = sizeof(client_addr);
     while (1) {
         pthread_attr_init(&t_attr);
         pthread_attr_setdetachstate(&t_attr, PTHREAD_CREATE_DETACHED);
-
-        if ((new_socket_fd = accept(socket_fd, (struct sockaddr *) &client_addr, (socklen_t *)&size)) == -1) {
-            perror("Error accepting connection on server.");
-            exit(1);
-        } else {
-            printf("Connection accepted.\n");
-        }
 
         if (pthread_create(&t_id, &t_attr, (void *)treat_message, (void *)&new_socket_fd) == 0) {
             printf("Thread created for client_%d.\n", getpid());
@@ -88,6 +43,29 @@ int main(int argc, char *argv[]) {
     printf("Server socket closed.\n");
     return 0;
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 int sendMessage(int socket_fd, char *buffer, int size) {
     int bytes_sent;

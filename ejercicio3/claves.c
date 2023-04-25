@@ -5,54 +5,8 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
-#include <netdb.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include <sys/socket.h>
 #include <errno.h>
 #include "claves.h"
-
-int enable_connection() {
-    int socket_fd;
-    struct sockaddr_in server_addr;
-    short server_port;
-    char *server_name;
-    struct hostent *server;
-    
-    if ((server_name = getenv("IP_TUPLAS")) == NULL) {
-        perror("Error getting server name on client.\n");
-        return -1;
-    }
-    if ((server_port = atoi(getenv("PORT_TUPLAS"))) == 0) {
-        perror("Error getting server port on client.\n");
-        return -1;
-    }
-
-    if ((socket_fd = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
-        perror("Error creating socket on client.\n");
-        return -1;
-    } else {
-        printf("Client socket created.\n");
-    }
-    bzero((char *) &server_addr, sizeof(server_addr));
-    if ((server = gethostbyname(server_name)) == NULL) {
-        perror("Error in gethostbyname on client.\n");
-        return -1;
-    }
-    server_addr.sin_family = AF_INET;
-    server_addr.sin_port = htons(server_port);
-    memcpy(&(server_addr.sin_addr), server->h_addr, server->h_length);
-    
-    if (connect(socket_fd, (struct sockaddr *) &server_addr, sizeof(server_addr)) == -1) {
-        perror("Error in connect on client.\n");
-        return -1;
-    } else {
-        printf("Connection established.\n");
-        return socket_fd;
-    }
-
-    return socket_fd;
-}
 
 int sendMessage(int socket_fd, char *buffer, int size) {
     int bytes_sent;
@@ -118,39 +72,32 @@ ssize_t readLine(int socket_fd, char *buffer, size_t size) {
 }
 
 int init() {            // function that sends the message of the init operation to the server
-    struct result res;
-    char buffer[256];
-    int operation_code = 0;
-    int sc = enable_connection();
-    
-    sprintf(buffer, "%d", operation_code);
-    if (sendMessage(sc, buffer, strlen(buffer)+1) == -1) {
-        perror("Error sending operation code of init in client.\n");
+    CLIENT *clnt;
+    enum clnt_stat retval;
+    int res;
+    char *server = "localhost";
+
+    if (clnt = clnt_create(server, SERVICES, SERVICESVER, "tcp") == NULL) {
+        clnt_pcreateerror(server);
+        perror("Error binding in client init.\n");
         return -1;
     } else {
-        printf("Operation code %d sent correctly.\n", operation_code);
+        printf("Client init binded correctly.\n");
     }
 
-    if (readLine(sc, buffer, 256) == -1) {
-        perror("Error reading init response in client.\n");
+    if (retval = init_1(&res, clnt) != RPC_SUCCESS) {
+        clnt_perror(clnt, "Error rpc in client.\n");
         return -1;
     } else {
-        res.result = atoi(buffer);
-        printf("Init response result received correctly with value %d.\n", res.result);
+        printf("Init rpc correctly in client.\n");
     }
 
-    if (close(sc) == -1) {
-        perror("Error closing connection socket in client init.\n");
-        return -1;
-    } else {
-        printf("Connection socket closed of client init.\n");
-    }
-
-    if (res.result == 1) {
+    clnt_destroy(clnt);
+    if (res == 1) {
         return 0;           // init ok
     } else {
         return -1;           // init error
-    }
+    } 
 }
 
 int set_value(int key, char *value1, int value2, double value3) {           // function that sends the message of the set_value operation to the server

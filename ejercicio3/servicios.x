@@ -1,7 +1,7 @@
 struct result_values {
     int key;
     sting value1<>;
-    int value2,
+    int value2;
     double value3;
 }
 
