@@ -1,10 +1,10 @@
 # Compilador del make
 CC=gcc
 # Opciones de compilación usadas
-CFLAGS=-g -Wall
+CFLAGS=-g -Wall -I/usr/include/tirpc
 # Lista de ejecutables
 BIN_FILES=cliente servidor
-# Ninguna opción del preprocesador implementada
+#LDLIBS+=-lnsl -lpthread -ldl -ltirpc
 
 all: $(BIN_FILES)
 

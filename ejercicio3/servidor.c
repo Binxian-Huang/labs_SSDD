@@ -44,7 +44,13 @@ int main(int argc, char *argv[]) {
     return 0;
 }
 
+bool_t init_1_svc(int *result, struct svc_req *) {
+    bool_t retval;
+    *result = init();
+    retval = TRUE;
 
+    return retval;
+}
 
 
 

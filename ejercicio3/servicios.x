@@ -3,7 +3,7 @@ struct result_values {
     sting value1<>;
     int value2;
     double value3;
-}
+};
 
 program SERVICES {
     version SERVICESVER {
