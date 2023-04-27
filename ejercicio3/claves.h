@@ -1,24 +1,9 @@
-struct petition {
-    int operation;
-    int key;
-    int key2;
-    char value1[256];
-    int value2;
-    double value3;
-};
-
 struct result {
     int result;
     char value1[256];
     int value2;
     double value3;
 };
-
-int enable_connection();
-
-int sendMessage(int socket_fd, char *buffer, int size);
-
-ssize_t readLine(int socket_fd, char *buffer, size_t size);
 
 int init();
 

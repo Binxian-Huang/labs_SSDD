@@ -1,5 +1,5 @@
 struct result_values {
-    int key;
+    int operation_result;
     sting value1<>;
     int value2;
     double value3;

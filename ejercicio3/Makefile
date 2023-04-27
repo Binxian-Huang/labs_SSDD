@@ -14,7 +14,7 @@ cliente: libclaves.so
 libclaves.so: claves.c
 	$(CC) $(CFLAGS) -o $@ -shared $< -fPIC
 
-servidor: servidor.o impl.o
+servidor: servicios_server.o servicios_svc.o impl.o
 	$(CC) $(CFLAGS) $^ -o $@
 
 %.o: %.c

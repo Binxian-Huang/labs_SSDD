@@ -10,7 +10,7 @@ xdr_result_values (XDR *xdrs, result_values *objp)
 {
 	register int32_t *buf;
 
-	 if (!xdr_int (xdrs, &objp->key))
+	 if (!xdr_int (xdrs, &objp->operation_result))
 		 return FALSE;
 	 if (!xdr_array (xdrs, (char **)&objp->value1.value1_val, (u_int *) &objp->value1.value1_len, ~0,
 		sizeof (sting), (xdrproc_t) xdr_sting))

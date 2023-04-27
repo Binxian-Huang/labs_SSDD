@@ -16,7 +16,7 @@ extern "C" {
 
 
 struct result_values {
-	int key;
+	int operation_result;
 	struct {
 		u_int value1_len;
 		sting *value1_val;
