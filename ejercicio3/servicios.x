@@ -1,6 +1,6 @@
 struct result_values {
     int operation_result;
-    sting value1<>;
+    string value1<>;
     int value2;
     double value3;
 };

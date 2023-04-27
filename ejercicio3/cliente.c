@@ -4,7 +4,7 @@
 #include <ctype.h>
 #include "claves.h"
 
-/* env LD_LIBRARY_PATH=$LD_LIBRARY_PATH:. IP_TUPLAS=localhost PORT_TUPLAS=8080 ./cliente */
+/* env LD_LIBRARY_PATH=$LD_LIBRARY_PATH:. IP_TUPLAS=localhost ./cliente */
 int main(int argc, char *argv[]) {
     int operation;
     int key;

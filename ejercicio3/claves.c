@@ -13,7 +13,12 @@ int init() {            // function that sends the message of the init operation
     CLIENT *clnt;
     enum clnt_stat retval;
     int res;
-    char *server = "localhost";
+    char *server;
+
+    if ((server = getenv("IP_TUPLAS")) == NULL) {
+        fprintf(stderr, "Error getting server name on client\n");
+        return -1;
+    }
 
     if ((clnt = clnt_create(server, SERVICES, SERVICESVER, "tcp")) == NULL) {
         clnt_pcreateerror(server);
@@ -42,7 +47,12 @@ int set_value(int key, char *value1, int value2, double value3) {           // f
     CLIENT *clnt;
     enum clnt_stat retval;
     int res;
-    char *server = "localhost";
+    char *server;
+
+    if ((server = getenv("IP_TUPLAS")) == NULL) {
+        fprintf(stderr, "Error getting server name on client\n");
+        return -1;
+    }
 
     if ((clnt = clnt_create(server, SERVICES, SERVICESVER, "tcp")) == NULL) {
         clnt_pcreateerror(server);
@@ -71,7 +81,12 @@ int get_value(int key, char *value1, int *value2, double *value3) {         // f
     CLIENT *clnt;
     enum clnt_stat retval;
     struct result_values res;
-    char *server = "localhost";
+    char *server;
+
+    if ((server = getenv("IP_TUPLAS")) == NULL) {
+        fprintf(stderr, "Error getting server name on client\n");
+        return -1;
+    }
 
     if ((clnt = clnt_create(server, SERVICES, SERVICESVER, "tcp")) == NULL) {
         clnt_pcreateerror(server);
@@ -103,7 +118,12 @@ int modify_value(int key, char *value1, int value2, double value3) {        // f
     CLIENT *clnt;
     enum clnt_stat retval;
     int res;
-    char *server = "localhost";
+    char *server;
+
+    if ((server = getenv("IP_TUPLAS")) == NULL) {
+        fprintf(stderr, "Error getting server name on client\n");
+        return -1;
+    }
 
     if ((clnt = clnt_create(server, SERVICES, SERVICESVER, "tcp")) == NULL) {
         clnt_pcreateerror(server);
@@ -132,7 +152,12 @@ int delete_key(int key) {                                        // function tha
     CLIENT *clnt;
     enum clnt_stat retval;
     int res;
-    char *server = "localhost";
+    char *server;
+
+    if ((server = getenv("IP_TUPLAS")) == NULL) {
+        fprintf(stderr, "Error getting server name on client\n");
+        return -1;
+    }
 
     if ((clnt = clnt_create(server, SERVICES, SERVICESVER, "tcp")) == NULL) {
         clnt_pcreateerror(server);
@@ -161,7 +186,12 @@ int exist(int key) {                                // function that sends the m
     CLIENT *clnt;
     enum clnt_stat retval;
     int res;
-    char *server = "localhost";
+    char *server;
+
+    if ((server = getenv("IP_TUPLAS")) == NULL) {
+        fprintf(stderr, "Error getting server name on client\n");
+        return -1;
+    }
 
     if ((clnt = clnt_create(server, SERVICES, SERVICESVER, "tcp")) == NULL) {
         clnt_pcreateerror(server);
@@ -192,7 +222,12 @@ int copy_key(int key1, int key2) {                      // function that sends t
     CLIENT *clnt;
     enum clnt_stat retval;
     int res;
-    char *server = "localhost";
+    char *server;
+
+    if ((server = getenv("IP_TUPLAS")) == NULL) {
+        fprintf(stderr, "Error getting server name on client\n");
+        return -1;
+    }
 
     if ((clnt = clnt_create(server, SERVICES, SERVICESVER, "tcp")) == NULL) {
         clnt_pcreateerror(server);
