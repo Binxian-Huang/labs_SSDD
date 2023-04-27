@@ -1,12 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "servidor.h"
-
-FILE *file;
-int array_key, array_value2;
-double array_value3;
-char array_value1[256];
+#include "claves.h"
 
 int init() {
     FILE *file;

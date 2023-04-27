@@ -15,7 +15,7 @@ int init() {            // function that sends the message of the init operation
     int res;
     char *server = "localhost";
 
-    if (clnt = clnt_create(server, SERVICES, SERVICESVER, "tcp") == NULL) {
+    if ((clnt = clnt_create(server, SERVICES, SERVICESVER, "tcp")) == NULL) {
         clnt_pcreateerror(server);
         fprintf(stderr, "Error binding in client init\n");
         return -1;
@@ -23,7 +23,7 @@ int init() {            // function that sends the message of the init operation
         fprintf(stdout, "Client init binded correctly\n");
     }
 
-    if (retval = init_1(&res, clnt) != RPC_SUCCESS) {
+    if ((retval = init_1(&res, clnt)) != RPC_SUCCESS) {
         clnt_perror(clnt, "Error rpc in client init\n");
         return -1;
     } else {
@@ -31,7 +31,7 @@ int init() {            // function that sends the message of the init operation
     }
 
     clnt_destroy(clnt);
-    if (res == 1) {
+    if (res == 0) {
         return 0;           // init ok
     } else {
         return -1;           // init error
@@ -44,7 +44,7 @@ int set_value(int key, char *value1, int value2, double value3) {           // f
     int res;
     char *server = "localhost";
 
-    if (clnt = clnt_create(server, SERVICES, SERVICESVER, "tcp") == NULL) {
+    if ((clnt = clnt_create(server, SERVICES, SERVICESVER, "tcp")) == NULL) {
         clnt_pcreateerror(server);
         fprintf(stderr, "Error binding in client set_value\n");
         return -1;
@@ -52,7 +52,7 @@ int set_value(int key, char *value1, int value2, double value3) {           // f
         fprintf(stdout, "Client set_value binded correctly\n");
     }
 
-    if (retval = set_1(key, value1, value2, value3, &res, clnt) != RPC_SUCCESS) {
+    if ((retval = set_1(key, value1, value2, value3, &res, clnt)) != RPC_SUCCESS) {
         clnt_perror(clnt, "Error rpc in client set_value\n");
         return -1;
     } else {
@@ -60,7 +60,7 @@ int set_value(int key, char *value1, int value2, double value3) {           // f
     }
 
     clnt_destroy(clnt);
-    if (res.result == 1) {
+    if (res == 0) {
         return 0;           // set_value ok
     } else {
         return -1;          // set_value error
@@ -73,7 +73,7 @@ int get_value(int key, char *value1, int *value2, double *value3) {         // f
     struct result_values res;
     char *server = "localhost";
 
-    if (clnt = clnt_create(server, SERVICES, SERVICESVER, "tcp") == NULL) {
+    if ((clnt = clnt_create(server, SERVICES, SERVICESVER, "tcp")) == NULL) {
         clnt_pcreateerror(server);
         fprintf(stderr, "Error binding in client get_value\n");
         return -1;
@@ -81,20 +81,21 @@ int get_value(int key, char *value1, int *value2, double *value3) {         // f
         fprintf(stdout, "Client get_value binded correctly\n");
     }
 
-    if (retval = init_1(&res, clnt) != RPC_SUCCESS) {
+    if ((retval = get_1(key, &res, clnt)) != RPC_SUCCESS) {
         clnt_perror(clnt, "Error rpc in client get_value\n");
         return -1;
     } else {
         fprintf(stdout, "Get_value rpc correct in client\n");
+        strcpy(value1, res.value1);
+        *value2 = res.value2;
+        *value3 = res.value3;
     }
 
     clnt_destroy(clnt);
-    if (res.result == 0) {
-
-        return -1;          // get_value error
+    if (res.operation_result == 0) {
+        return 0;          // get_value ok
     } else {
-
-        return 0;           // get_value ok
+        return -1;           // get_value error
     }
 }
 
@@ -104,7 +105,7 @@ int modify_value(int key, char *value1, int value2, double value3) {        // f
     int res;
     char *server = "localhost";
 
-    if (clnt = clnt_create(server, SERVICES, SERVICESVER, "tcp") == NULL) {
+    if ((clnt = clnt_create(server, SERVICES, SERVICESVER, "tcp")) == NULL) {
         clnt_pcreateerror(server);
         fprintf(stderr, "Error binding in client modify_value\n");
         return -1;
@@ -112,7 +113,7 @@ int modify_value(int key, char *value1, int value2, double value3) {        // f
         fprintf(stdout, "Client modify_value binded correctly\n");
     }
 
-    if (retval = init_1(&res, clnt) != RPC_SUCCESS) {
+    if ((retval = modify_1(key, value1, value2, value3, &res, clnt)) != RPC_SUCCESS) {
         clnt_perror(clnt, "Error rpc in client modify_value\n");
         return -1;
     } else {
@@ -120,7 +121,7 @@ int modify_value(int key, char *value1, int value2, double value3) {        // f
     }
 
     clnt_destroy(clnt);
-    if (res.result == 1) {
+    if (res == 0) {
         return 0;           // modify_value ok
     } else {
         return -1;          // modify_value error
@@ -133,7 +134,7 @@ int delete_key(int key) {                                        // function tha
     int res;
     char *server = "localhost";
 
-    if (clnt = clnt_create(server, SERVICES, SERVICESVER, "tcp") == NULL) {
+    if ((clnt = clnt_create(server, SERVICES, SERVICESVER, "tcp")) == NULL) {
         clnt_pcreateerror(server);
         fprintf(stderr, "Error binding in client delete_key\n");
         return -1;
@@ -141,7 +142,7 @@ int delete_key(int key) {                                        // function tha
         fprintf(stdout, "Client delete_key binded correctly\n");
     }
 
-    if (retval = init_1(&res, clnt) != RPC_SUCCESS) {
+    if ((retval = delete_1(key, &res, clnt)) != RPC_SUCCESS) {
         clnt_perror(clnt, "Error rpc in client delete_key\n");
         return -1;
     } else {
@@ -149,7 +150,7 @@ int delete_key(int key) {                                        // function tha
     }
 
     clnt_destroy(clnt);
-    if (res.result == 1) {
+    if (res == 0) {
         return 0;           // delete_key ok
     } else {
         return -1;          // delete_key error
@@ -162,7 +163,7 @@ int exist(int key) {                                // function that sends the m
     int res;
     char *server = "localhost";
 
-    if (clnt = clnt_create(server, SERVICES, SERVICESVER, "tcp") == NULL) {
+    if ((clnt = clnt_create(server, SERVICES, SERVICESVER, "tcp")) == NULL) {
         clnt_pcreateerror(server);
         fprintf(stderr, "Error binding in client exist\n");
         return -1;
@@ -170,7 +171,7 @@ int exist(int key) {                                // function that sends the m
         fprintf(stdout, "Client exist binded correctly\n");
     }
 
-    if (retval = init_1(&res, clnt) != RPC_SUCCESS) {
+    if ((retval = exist_1(key, &res, clnt)) != RPC_SUCCESS) {
         clnt_perror(clnt, "Error rpc in client exist\n");
         return -1;
     } else {
@@ -178,9 +179,9 @@ int exist(int key) {                                // function that sends the m
     }
 
     clnt_destroy(clnt);
-    if (res.result == 1) {
+    if (res == 1) {
         return 1;           // exist
-    } else if (res.result == 0) {
+    } else if (res == 0) {
         return 0;           // not exist
     } else {
         return -1;          // exist error
@@ -193,7 +194,7 @@ int copy_key(int key1, int key2) {                      // function that sends t
     int res;
     char *server = "localhost";
 
-    if (clnt = clnt_create(server, SERVICES, SERVICESVER, "tcp") == NULL) {
+    if ((clnt = clnt_create(server, SERVICES, SERVICESVER, "tcp")) == NULL) {
         clnt_pcreateerror(server);
         fprintf(stderr, "Error binding in client copy_key\n");
         return -1;
@@ -201,7 +202,7 @@ int copy_key(int key1, int key2) {                      // function that sends t
         fprintf(stdout, "Client copy_key binded correctly\n");
     }
 
-    if (retval = init_1(&res, clnt) != RPC_SUCCESS) {
+    if ((retval = copy_1(key1, key2, &res, clnt)) != RPC_SUCCESS) {
         clnt_perror(clnt, "Error rpc in client copy_key\n");
         return -1;
     } else {
@@ -209,7 +210,7 @@ int copy_key(int key1, int key2) {                      // function that sends t
     }
 
     clnt_destroy(clnt);
-    if (res.result == 1) {
+    if (res == 0) {
         return 0;           // copy_key ok
     } else {
         return -1;          // copy_key error
