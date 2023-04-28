@@ -12,8 +12,7 @@ xdr_result_values (XDR *xdrs, result_values *objp)
 
 	 if (!xdr_int (xdrs, &objp->operation_result))
 		 return FALSE;
-	 if (!xdr_array (xdrs, (char **)&objp->value1.value1_val, (u_int *) &objp->value1.value1_len, ~0,
-		sizeof (sting), (xdrproc_t) xdr_sting))
+	 if (!xdr_string (xdrs, &objp->value1, ~0))
 		 return FALSE;
 	 if (!xdr_int (xdrs, &objp->value2))
 		 return FALSE;

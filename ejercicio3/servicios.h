@@ -17,10 +17,7 @@ extern "C" {
 
 struct result_values {
 	int operation_result;
-	struct {
-		u_int value1_len;
-		sting *value1_val;
-	} value1;
+	char *value1;
 	int value2;
 	double value3;
 };
