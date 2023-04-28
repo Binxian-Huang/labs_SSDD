@@ -44,5 +44,7 @@ $(CLAVES): claves.c servicios_clnt.o servicios_xdr.o
 	$(CC) $(CFLAGS) $(LDLIBS) $(OBJECTS_CLNT) -o $@ -shared $^ -fPIC
 
 clean:
-	 $(RM) core $(TARGETS) $(OBJECTS_CLNT) $(CLAVES) $(CLIENT) $(SERVER)
+	rm -f $(BIN_FILES) *.o *.so
+	rm arrays.txt
+
 
