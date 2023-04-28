@@ -3,7 +3,11 @@ import sys
 import PySimpleGUI as sg
 from enum import Enum
 import argparse
+from threading import Thread, Condition
+import socket
 
+#python3 ./client.py -s <IP> -p <PUERTO>
+#python3 ./client.py -s localhost -p 8888
 class client :
 
     # ******************** TYPES *********************
