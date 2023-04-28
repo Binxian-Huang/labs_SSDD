@@ -8,11 +8,9 @@
 #include <errno.h>
 #include <string.h>
 #include <unistd.h>
-#include "servidor.h"
 
 pthread_mutex_t mutex_mensaje = PTHREAD_MUTEX_INITIALIZER;
 pthread_cond_t cond_mensaje = PTHREAD_COND_INITIALIZER;
-int mensaje_no_copiado = 1;
 
 int main(int argc, char *argv[]) {
     pthread_t t_id;
@@ -60,28 +58,7 @@ int main(int argc, char *argv[]) {
     
     size = sizeof(client_addr);
     while (1) {
-        pthread_attr_init(&t_attr);
-        pthread_attr_setdetachstate(&t_attr, PTHREAD_CREATE_DETACHED);
-
-        if ((new_socket_fd = accept(socket_fd, (struct sockaddr *) &client_addr, (socklen_t *)&size)) == -1) {
-            perror("Error accepting connection on server.");
-            exit(1);
-        } else {
-            printf("Connection accepted.\n");
-        }
-
-        if (pthread_create(&t_id, &t_attr, (void *)treat_message, (void *)&new_socket_fd) == 0) {
-            printf("Thread created for client_%d.\n", getpid());
-            pthread_mutex_lock(&mutex_mensaje);
-            while (mensaje_no_copiado) {
-                pthread_cond_wait(&cond_mensaje, &mutex_mensaje);
-            }
-            mensaje_no_copiado = 1;
-            pthread_mutex_unlock(&mutex_mensaje);
-        } else {
-            perror("Error creating thread.");
-            exit(1);
-        }
+        
     }
 
     close(socket_fd);
