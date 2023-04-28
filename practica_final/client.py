@@ -27,6 +27,15 @@ class client :
     _date = None
 
     # ******************** METHODS *******************
+    @staticmethod
+    def readNumber(sock):
+        a = ''
+        while True:
+            msg = sock.recv(1)
+            if (msg == b'\0'):
+                break
+            a += msg.decode()
+        return(int(a,10))
     # *
     # * @param user - User name to register in the system
     # *
@@ -35,9 +44,32 @@ class client :
     # * @return ERROR if another error occurred
     @staticmethod
     def  register(user, window):
-        window['_SERVER_'].print("s> REGISTER OK")
-        #  Write your code here
+        try:
+            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            print('Socket created')
+        except socket.error:
+            print('Failed to create socket in register')
+        try:
+            sock.connect((client._server, client._port))
+            print('Socket connected')
+        except socket.error:
+            print('Failed to connect to server in register')
+        
+        sock.sendall(str(client._username).encode() + b'\0')
+        sock.sendall(str(client._alias).encode() + b'\0')
+        sock.sendall(str(client._date).encode() + b'\0')
+        
+        res = client.readNumber(sock)
+        if res == 0:
+            window['_CLIENT_'].print("s> REGISTER OK")
+            return client.RC.OK
+        elif res == 1:
+            window['_CLIENT_'].print("s> REGISTER IN USE")
+            return client.RC.USER_ERROR
+
+        window['_CLIENT_'].print("s> REGISTER FAIL")
         return client.RC.ERROR
+
 
     # *
     # 	 * @param user - User name to unregister from the system
@@ -220,6 +252,7 @@ class client :
                 continue
 
             if (event == 'REGISTER'):
+                window['_CLIENT_'].print('c> REGISTER <userName>')
                 client.window_register()
 
                 if (client._alias == None or client._username == None or client._alias == 'Text' or client._username == 'Text' or client._date == None):
