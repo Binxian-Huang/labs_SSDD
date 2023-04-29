@@ -20,3 +20,4 @@ servidor: server.o
 clean:
 	rm -f $(BIN_FILES) *.o *.so
 	rm arrays.txt
+
