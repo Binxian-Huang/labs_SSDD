@@ -6,6 +6,7 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <errno.h>
+#include <rpc/rpc.h>
 #include "claves.h"
 #include "servicios.h"
 

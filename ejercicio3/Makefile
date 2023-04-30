@@ -10,13 +10,13 @@ LDLIBS+=-lnsl -lpthread -ldl -ltirpc
 all: $(BIN_FILES)
 
 cliente: libclaves.so
-	$(CC) $(CFLAGS) $(LDLIBS) $@.c -o $@ -L. libclaves.so
+	$(CC) $(CFLAGS) $@.c -o $@ -L. libclaves.so $(LDLIBS)
 
 libclaves.so: claves.c servicios_clnt.o servicios_xdr.o
 	$(CC) $(CFLAGS) -o $@ -shared $< -fPIC servicios_clnt.o servicios_xdr.o
 
 servidor: servicios_server.o impl.o servicios_svc.o servicios_xdr.o
-	$(CC) $(CFLAGS) $(LDLIBS) $^ -o $@
+	$(CC) $(CFLAGS) $^ -o $@ $(LDLIBS)
 
 %.o: %.c
 	@echo "Compiling... $<"

@@ -1,3 +1,4 @@
+#include <rpc/rpc.h>
 #include "servicios.h"
 #include "claves.h"
 
@@ -27,7 +28,7 @@ set_1_svc(int key, char *value1, int value2, double value3, int *result,  struct
 	bool_t retval;
 
 	fprintf(stdout, "In set_value rpc server\n");
-	if ((*result = set(key, value1, value2, value3)) == -1) {
+	if ((*result = set_value(key, value1, value2, value3)) == -1) {
 		fprintf(stderr, "Error in operation set_value server with value %d\n", *result);
 		retval = FALSE;
 	} else if (*result == 0) {
@@ -47,10 +48,11 @@ get_1_svc(int key, struct result_values *result,  struct svc_req *rqstp)
 	bool_t retval;
 
 	fprintf(stdout, "In get_value rpc server\n");
-	if ((int operation = get(key, &result->value1, &result->value2, &result->value3)) == -1) {
+	int operation = get_value(key, result->value1, &result->value2, &result->value3);
+	if (operation == -1) {
 		fprintf(stderr, "Error in operation get_value server with value %d\n", operation);
 		retval = FALSE;
-	} else if (*result == 0) {
+	} else if (operation == 0) {
 		fprintf(stdout, "Operation get_value correct in server with value %d\n", operation);
 		retval = TRUE;
 	} else {
@@ -68,7 +70,7 @@ modify_1_svc(int key, char *value1, int value2, double value3, int *result,  str
 	bool_t retval;
 
 	fprintf(stdout, "In modify_value rpc server\n");
-	if ((*result = modify(key, value1, value2, value3)) == -1) {
+	if ((*result = modify_value(key, value1, value2, value3)) == -1) {
 		fprintf(stderr, "Error in operation modify_value server with value %d\n", *result);
 		retval = FALSE;
 	} else if (*result == 0) {
@@ -88,7 +90,7 @@ delete_1_svc(int key, int *result,  struct svc_req *rqstp)
 	bool_t retval;
 
 	fprintf(stdout, "In delete_key rpc server\n");
-	if ((*result = delete(key);) == -1) {
+	if ((*result = delete_key(key)) == -1) {
 		fprintf(stderr, "Error in operation delete_key server with value %d\n", *result);
 		retval = FALSE;
 	} else if (*result == 0) {
@@ -128,7 +130,7 @@ copy_1_svc(int key1, int key2, int *result,  struct svc_req *rqstp)
 	bool_t retval;
 
 	fprintf(stdout, "In copy_key rpc server\n");
-	if ((*result = copy(key1, key2)) == -1) {
+	if ((*result = copy_key(key1, key2)) == -1) {
 		fprintf(stderr, "Error in operation copy_key server with value %d\n", *result);
 		retval = FALSE;
 	} else if (*result == 0) {
