@@ -3,6 +3,8 @@
         "string.h": "c",
         "stdlib.h": "c",
         "stat.h": "c",
-        "socket.h": "c"
+        "socket.h": "c",
+        "claves.h": "c",
+        "servicios.h": "c"
     }
 }

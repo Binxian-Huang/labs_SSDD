@@ -18,7 +18,7 @@ init_1_svc(int *result, struct svc_req *rqstp)
 		fprintf(stderr, "Unknown error in operation init server with value %d\n", *result);
 		retval = FALSE;
 	}
-
+	
 	return retval;
 }
 
