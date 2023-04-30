@@ -6,14 +6,6 @@
 
 /* env LD_LIBRARY_PATH=$LD_LIBRARY_PATH:. IP_TUPLAS=localhost ./cliente */
 int main(int argc, char *argv[]) {
-    int operation;
-    int key;
-    int key2;
-    char value1[256];
-    int value2;
-    double value3;
-    int res;
-
     if (argc != 1){
         printf("Usage: ./cliente\n");
     }
@@ -29,7 +21,14 @@ int main(int argc, char *argv[]) {
     printf("EXIT - 7\n");
 
     while (1)
-    {
+    {   
+        int operation;
+        int key;
+        int key2;
+        char value1[256];
+        int value2;
+        double value3;
+        int res;
         char input[512];
         operation = -1;
 

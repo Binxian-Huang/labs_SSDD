@@ -25,15 +25,11 @@ int init() {            // function that sends the message of the init operation
         clnt_pcreateerror(server);
         fprintf(stderr, "Error binding in client init\n");
         return -1;
-    } else {
-        fprintf(stdout, "Client init binded correctly\n");
     }
 
     if ((retval = init_1(&res, clnt)) != RPC_SUCCESS) {
         clnt_perror(clnt, "Error rpc in client init\n");
         return -1;
-    } else {
-        fprintf(stdout, "Init rpc correct in client\n");
     }
 
     clnt_destroy(clnt);
@@ -59,15 +55,11 @@ int set_value(int key, char *value1, int value2, double value3) {           // f
         clnt_pcreateerror(server);
         fprintf(stderr, "Error binding in client set_value\n");
         return -1;
-    } else {
-        fprintf(stdout, "Client set_value binded correctly\n");
     }
 
     if ((retval = set_1(key, value1, value2, value3, &res, clnt)) != RPC_SUCCESS) {
         clnt_perror(clnt, "Error rpc in client set_value\n");
         return -1;
-    } else {
-        fprintf(stdout, "Set_value rpc correct in client\n");
     }
 
     clnt_destroy(clnt);

@@ -113,7 +113,7 @@ exist_1_svc(int key, int *result,  struct svc_req *rqstp)
 	if ((*result = exist(key)) == -1) {
 		fprintf(stderr, "Error in operation exist server with value %d\n", *result);
 		retval = FALSE;
-	} else if (*result == 0 && *result == 1) {
+	} else if (*result == 0 || *result == 1) {
 		fprintf(stdout, "Operation exist correct in server with value %d\n", *result);
 		retval = TRUE;
 	} else {
