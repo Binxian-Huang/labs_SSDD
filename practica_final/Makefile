@@ -8,7 +8,7 @@ BIN_FILES=server
 
 all: $(BIN_FILES)
 
-servidor: server.o
+server: server.o impl.o
 	$(CC) $(CFLAGS) $^ -o $@
 
 %.o: %.c
@@ -19,5 +19,3 @@ servidor: server.o
 .PHONY: clean 
 clean:
 	rm -f $(BIN_FILES) *.o *.so
-	rm arrays.txt
-

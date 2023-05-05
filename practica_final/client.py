@@ -46,28 +46,35 @@ class client :
     def  register(user, window):
         try:
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            print('Socket created')
+            print('Socket created in register client\n')
         except socket.error:
-            print('Failed to create socket in register')
+            print('Failed to create socket in register client\n')
         try:
             sock.connect((client._server, client._port))
-            print('Socket connected')
+            print('Socket connected in register client\n')
         except socket.error:
-            print('Failed to connect to server in register')
+            print('Failed to connect to server in register client\n')
         
+        sock.sendall(b'REGISTER\0')
         sock.sendall(str(client._username).encode() + b'\0')
         sock.sendall(str(client._alias).encode() + b'\0')
         sock.sendall(str(client._date).encode() + b'\0')
         
         res = client.readNumber(sock)
+        try:
+            sock.shutdown(socket.SHUT_RDWR)
+            sock.close()
+            print('Socket closed in register client\n')
+        except socket.error:
+            print('Failed to close socket in register\n')
         if res == 0:
-            window['_CLIENT_'].print("s> REGISTER OK")
+            window['_SERVER_'].print("s> REGISTER OK")
             return client.RC.OK
         elif res == 1:
-            window['_CLIENT_'].print("s> REGISTER IN USE")
+            window['_SERVER_'].print("s> REGISTER IN USE")
             return client.RC.USER_ERROR
 
-        window['_CLIENT_'].print("s> REGISTER FAIL")
+        window['_SERVER_'].print("s> REGISTER FAIL")
         return client.RC.ERROR
 
 
@@ -252,7 +259,7 @@ class client :
                 continue
 
             if (event == 'REGISTER'):
-                window['_CLIENT_'].print('c> REGISTER <userName>')
+                #   window['_CLIENT_'].print('c> REGISTER <userName>')
                 client.window_register()
 
                 if (client._alias == None or client._username == None or client._alias == 'Text' or client._username == 'Text' or client._date == None):
