@@ -8,3 +8,5 @@ struct client_data {
 };
 
 int register_user(struct client_data *client);
+
+int unregister_user(char *username);

@@ -119,6 +119,20 @@ void treat_message(void *new_socket_fd) {
         } else {
             fprintf(stdout, "REGISTER result sent correctly with value: %d\n", result);
         }
+    } else if (strcmp(operation, "UNREGISTER") == 0) {
+        if (readLine(socket_fd, buffer, 256) == -1) {
+            fprintf(stderr, "Error reading username of unregister in server.\n");
+        } else {
+            strcpy(client_data.username, buffer);
+        }
+
+        result = register_user(client_data.username)
+        sprintf(buffer, "%d", result);
+        if (sendMessage(socket_fd, buffer, strlen(buffer)+1) == -1) {
+            fprintf(stderr, "Error sending UNREGISTER result in server\n");
+        } else {
+            fprintf(stdout, "UNREGISTER result sent correctly with value: %d\n", result);
+        }
     }
    
         /*
@@ -335,11 +349,14 @@ void treat_message(void *new_socket_fd) {
             }
             break;
         */
+    else {
+        fprintf(stderr, "Operation not recognized\n");
+    }
 
     if (close(socket_fd) == -1) {
-        perror("Error closing connection socket in server.\n");
+        fprintf(stderr, "Error closing connection socket in server\n");
     } else {
-        printf("Connection socket closed in server.\n");
+        fprintf(stdout, "Connection socket closed in server\n");
     }
     pthread_exit(0);
     return;

@@ -67,6 +67,7 @@ class client :
             print('Socket closed in register client\n')
         except socket.error:
             print('Failed to close socket in register\n')
+
         if res == 0:
             window['_SERVER_'].print("s> REGISTER OK")
             return client.RC.OK
@@ -86,8 +87,36 @@ class client :
     # 	 * @return ERROR if another error occurred
     @staticmethod
     def  unregister(user, window):
-        window['_SERVER_'].print("s> UNREGISTER OK")
-        #  Write your code here
+        try:
+            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            print('Socket created in unregister client\n')
+        except socket.error:
+            print('Failed to create socket in unregister client\n')
+        try:
+            sock.connect((client._server, client._port))
+            print('Socket connected in unregister client\n')
+        except socket.error:
+            print('Failed to connect to server in unregister client\n')
+        
+        sock.sendall(b'UNREGISTER\0')
+        sock.sendall(str(client._username).encode() + b'\0')
+        
+        res = client.readNumber(sock)
+        try:
+            sock.shutdown(socket.SHUT_RDWR)
+            sock.close()
+            print('Socket closed in unregister client\n')
+        except socket.error:
+            print('Failed to close socket in unregister\n')
+
+        if res == 0:
+            window['_SERVER_'].print("s> UNREGISTER OK")
+            return client.RC.OK
+        elif res == 1:
+            window['_SERVER_'].print("s> USER DOES NOT EXIST")
+            return client.RC.USER_ERROR
+        
+        window['_SERVER_'].print("s> UNREGISTER FAIL")
         return client.RC.ERROR
 
 
