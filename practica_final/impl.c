@@ -3,6 +3,7 @@
 #include <dirent.h>
 #include <sys/stat.h>
 #include <string.h>
+#include <unistd.h>
 #include "server.h"
 
 int client_existing (char *userdir_path) {
@@ -96,6 +97,8 @@ int unregister_user(char *username) {
     strcat(datafilename, userdata_path);
     strcpy(messagesfilename, userdir_path);
     strcat(messagesfilename, usermessages_path);
+    fprintf(stdout, "Data file: %s\n", datafilename);
+    fprintf(stdout, "Messages file: %s\n", messagesfilename);
 
     if (access(datafilename, F_OK) != -1) {
         if (remove(datafilename) != 0) {

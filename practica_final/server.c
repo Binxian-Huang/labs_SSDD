@@ -126,7 +126,7 @@ void treat_message(void *new_socket_fd) {
             strcpy(client_data.username, buffer);
         }
 
-        result = register_user(client_data.username)
+        result = unregister_user(client_data.username);
         sprintf(buffer, "%d", result);
         if (sendMessage(socket_fd, buffer, strlen(buffer)+1) == -1) {
             fprintf(stderr, "Error sending UNREGISTER result in server\n");
