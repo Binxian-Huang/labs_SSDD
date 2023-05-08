@@ -25,8 +25,8 @@ int register_user (struct client_data *client) {
     fprintf(stdout, "IP: %s\n", client->ip);
     fprintf(stdout, "Port: %d\n", client->port);
 
-    char *userdir_path = malloc(strlen(client->username) + 1);
-    strcpy(userdir_path, client->username);
+    char *userdir_path = malloc(strlen(client->alias) + 1);
+    strcpy(userdir_path, client->alias);
 
     if (client_existing(userdir_path) == 1) {
         fprintf(stdout, "Client already registered\n");
@@ -79,9 +79,9 @@ int register_user (struct client_data *client) {
     }
 };
 
-int unregister_user(char *username) {
-    char *userdir_path = malloc(strlen(username) + 1);
-    strcpy(userdir_path, username);
+int unregister_user(char *alias) {
+    char *userdir_path = malloc(strlen(alias) + 1);
+    strcpy(userdir_path, alias);
 
     if (client_existing(userdir_path) == 0) {
         fprintf(stdout, "Client not registered\n");
@@ -130,5 +130,63 @@ int unregister_user(char *username) {
         fprintf(stderr, "Error unregistering client\n");
         free(userdir_path);
         return 2;
+    }
+};
+
+int connect_user(char *alias, char *ip, int port) {
+    fprintf(stdout, "Alias: %s\n", alias);
+    fprintf(stdout, "IP: %s\n", ip);
+    fprintf(stdout, "Port: %d\n", port);
+
+    char *userdir_path = malloc(strlen(alias) + 1);
+    strcpy(userdir_path, alias);
+
+    if (client_existing(userdir_path) == 0) {
+        fprintf(stdout, "Client not registered\n");
+        free(userdir_path);
+        return 1;
+    }
+
+    char userdata_path[] = "/user_data.txt";
+    char *datafilename = malloc(strlen(userdir_path) + strlen(userdata_path) + 1);
+    strcpy(datafilename, userdir_path);
+    strcat(datafilename, userdata_path);
+    fprintf(stdout, "Data file: %s\n", datafilename);
+
+    if (access(datafilename, F_OK) != -1) {
+        FILE* file = fopen(datafilename, "r+");
+        char line[256];
+        while (fgets(line, 256, file) != NULL) {
+            if (strstr(line, "Online: ") != NULL) {
+                int current_online = atoi(line + strlen("Online: "));
+                fprintf(stdout, "Current online: %d\n", current_online);
+                if (current_online == 1) {
+                    fprintf(stdout, "Client already online\n");
+                    free(datafilename);
+                    free(userdir_path);
+                    fclose(file);
+                    return 2;
+                } else {
+                    fseek(file, -(strlen(line)), SEEK_CUR);
+                    fprintf(file, "Online: %d\n", 1);
+                }
+            }
+            if (strstr(line, "IP: ") != NULL) {
+                fseek(file, -(strlen(line)), SEEK_CUR);
+                fprintf(file, "IP: %s\n", ip);
+            } else if (strstr(line, "Port: ") != NULL) {
+                fseek(file, -(strlen(line)), SEEK_CUR);
+                fprintf(file, "Port: %d\n", port);
+            }
+        }
+        free(datafilename);
+        free(userdir_path);
+        fclose(file);
+        return 0;
+    } else {
+        fprintf(stderr, "Error opening user_data file on connect_user\n");
+        free(datafilename);
+        free(userdir_path);
+        return 3;
     }
 };

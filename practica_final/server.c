@@ -89,24 +89,24 @@ void treat_message(void *new_socket_fd) {
     int result;
     struct client_data client_data;
     if (readLine(socket_fd, operation, 256) == -1) {
-        perror("Error reading operation code from client.\n");
+        perror("Error reading operation code from client\n");
     } else{
         printf("Operation received on server: %s\n", operation);
     }
 
     if (strcmp(operation, "REGISTER") == 0) {
         if (readLine(socket_fd, buffer, 256) == -1) {
-            fprintf(stderr, "Error reading username of register in server.\n");
+            fprintf(stderr, "Error reading username of register in server\n");
         } else {
             strcpy(client_data.username, buffer);
         }
         if (readLine(socket_fd, buffer, 256) == -1) {
-            fprintf(stderr, "Error reading alias of register in server.\n");
+            fprintf(stderr, "Error reading alias of register in server\n");
         } else {
             strcpy(client_data.alias, buffer);
         }
         if (readLine(socket_fd, buffer, 256) == -1) {
-            fprintf(stderr, "Error reading birthday of register in server.\n");
+            fprintf(stderr, "Error reading birthday of register in server\n");
         } else {
             strcpy(client_data.birthday, buffer);
         }
@@ -121,17 +121,46 @@ void treat_message(void *new_socket_fd) {
         }
     } else if (strcmp(operation, "UNREGISTER") == 0) {
         if (readLine(socket_fd, buffer, 256) == -1) {
-            fprintf(stderr, "Error reading username of unregister in server.\n");
+            fprintf(stderr, "Error reading alias of unregister in server\n");
         } else {
-            strcpy(client_data.username, buffer);
+            strcpy(client_data.alias, buffer);
         }
 
-        result = unregister_user(client_data.username);
+        result = unregister_user(client_data.alias);
         sprintf(buffer, "%d", result);
         if (sendMessage(socket_fd, buffer, strlen(buffer)+1) == -1) {
             fprintf(stderr, "Error sending UNREGISTER result in server\n");
         } else {
             fprintf(stdout, "UNREGISTER result sent correctly with value: %d\n", result);
+        }
+    } else if (strcmp(operation, "CONNECT") == 0) {
+        if (readLine(socket_fd, buffer, 256) == -1) {
+            fprintf(stderr, "Error reading alias of connect in server\n");
+        } else {
+            strcpy(client_data.alias, buffer);
+        }
+        if (readLine(socket_fd, buffer, 256) == -1) {
+            fprintf(stderr, "Error reading port of connect in server\n");
+        } else {
+            client_data.port = atoi(buffer);
+        }
+
+        char client_ip[INET_ADDRSTRLEN];
+        struct sockaddr_in client_addr;
+        socklen_t client_addr_len = sizeof(client_addr);
+        if (getpeername(socket_fd, (struct sockaddr *) &client_addr, &client_addr_len) == -1) {
+            fprintf(stderr, "Error getting client IP in connect server\n");
+        } else {
+            inet_ntop(AF_INET, &client_addr.sin_addr, client_ip, sizeof(client_ip));
+            strcpy(client_data.ip, client_ip);
+        }
+
+        result = connect_user(client_data.alias, client_data.ip, client_data.port);
+        sprintf(buffer, "%d", result);
+        if (sendMessage(socket_fd, buffer, strlen(buffer)+1) == -1) {
+            fprintf(stderr, "Error sending CONNECT result in server\n");
+        } else {
+            fprintf(stdout, "CONNECT result sent correctly with value: %d\n", result);
         }
     }
    
@@ -366,6 +395,8 @@ int main(int argc, char *argv[]) {
     pthread_t t_id;
     pthread_attr_t t_attr;
     struct sockaddr_in server_addr, client_addr;
+    struct addrinfo hints, *res;
+    struct sockaddr_in *ipv4;
     socklen_t size;
     int socket_fd, new_socket_fd;
     int val = 1;
@@ -389,8 +420,6 @@ int main(int argc, char *argv[]) {
     server_addr.sin_family = AF_INET;
     server_addr.sin_port = htons(atoi(argv[2]));
     server_addr.sin_addr.s_addr = INADDR_ANY;
-    fprintf(stdout, "s> init server %s:%d\n", inet_ntoa(server_addr.sin_addr), ntohs(server_addr.sin_port));
-    fprintf(stdout, "s> \n");
 
     if (bind(socket_fd, (struct sockaddr *) &server_addr, sizeof(server_addr)) == -1) {
         fprintf(stderr, "Error binding socket on server\n");
@@ -401,7 +430,31 @@ int main(int argc, char *argv[]) {
         fprintf(stderr, "Error listening on server\n");
         exit(1);
     }
-    
+
+    memset(&hints, 0, sizeof(hints));
+    hints.ai_family = AF_INET;
+    hints.ai_socktype = SOCK_STREAM;
+    char *host = "localhost";
+
+    if (getaddrinfo(host, NULL, &hints, &res) != 0) {
+        fprintf(stderr, "Error getting address info on server\n");
+        exit(1);
+    }
+
+    for (struct addrinfo *addr = res; addr != NULL; addr = addr->ai_next) {
+        ipv4 = (struct sockaddr_in *)addr->ai_addr;
+        char ip[INET_ADDRSTRLEN];
+        if (inet_ntop(AF_INET, &ipv4->sin_addr, ip, sizeof(ip)) != NULL) {
+            fprintf(stdout, "s> init server %s:%d\n", ip, ntohs(server_addr.sin_port));
+            fprintf(stdout, "s> \n");
+            freeaddrinfo(res);
+            break;
+        }
+    }
+    /*
+    fprintf(stdout, "s> init server %s:%d\n", inet_ntoa(server_addr.sin_addr), ntohs(server_addr.sin_port));
+    fprintf(stdout, "s> \n");
+    */
     size = sizeof(client_addr);
     while (1) {
         pthread_attr_init(&t_attr);

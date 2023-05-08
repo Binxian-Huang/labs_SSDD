@@ -49,11 +49,13 @@ class client :
             print('Socket created in register client\n')
         except socket.error:
             print('Failed to create socket in register client\n')
+            return client.RC.ERROR
         try:
             sock.connect((client._server, client._port))
             print('Socket connected in register client\n')
         except socket.error:
             print('Failed to connect to server in register client\n')
+            return client.RC.ERROR
         
         sock.sendall(b'REGISTER\0')
         sock.sendall(str(client._username).encode() + b'\0')
@@ -92,14 +94,16 @@ class client :
             print('Socket created in unregister client\n')
         except socket.error:
             print('Failed to create socket in unregister client\n')
+            return client.RC.ERROR
         try:
             sock.connect((client._server, client._port))
             print('Socket connected in unregister client\n')
         except socket.error:
             print('Failed to connect to server in unregister client\n')
+            return client.RC.ERROR
         
         sock.sendall(b'UNREGISTER\0')
-        sock.sendall(str(client._username).encode() + b'\0')
+        sock.sendall(str(client._alias).encode() + b'\0')
         
         res = client.readNumber(sock)
         try:
@@ -128,8 +132,51 @@ class client :
     # * @return ERROR if another error occurred
     @staticmethod
     def  connect(user, window):
-        window['_SERVER_'].print("s> CONNECT OK")
-        #  Write your code here
+        try:
+            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            print('Socket to server created in connect client\n')
+        except socket.error:
+            print('Failed to create socket to server in connect client\n')
+            return client.RC.ERROR
+        try:
+            sock.connect((client._server, client._port))
+            print('Socket to server connected in connect client\n')
+        except socket.error:
+            print('Failed to connect to server in connect client\n')
+            return client.RC.ERROR
+        try:
+            client_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            print('Socket client for listen created in connect client\n')
+            client_sock.bind(('0.0.0.0', 0))
+            client_port = client_sock.getsockname()[1]
+        except socket.error:
+            print('Failed to create socket client for listen in connect client\n')
+            return client.RC.ERROR
+
+        
+        sock.sendall(b'CONNECT\0')
+        sock.sendall(str(client._alias).encode() + b'\0')
+        sock.sendall(str(client_port).encode() + b'\0')
+        
+        res = client.readNumber(sock)
+        try:
+            sock.shutdown(socket.SHUT_RDWR)
+            sock.close()
+            print('Socket to server closed in connect client\n')
+        except socket.error:
+            print('Failed to close socket to server in connect\n')
+
+        if res == 0:
+            window['_SERVER_'].print("s> CONNECT OK")
+            return client.RC.OK
+        elif res == 1:
+            window['_SERVER_'].print("s> CONNECT FAIL, USER DOES NOT EXIST")
+            return client.RC.USER_ERROR
+        elif res == 2:
+            window['_SERVER_'].print("s> USER ALREADY CONNECTED")
+            return client.RC.USER_ERROR
+
+        window['_SERVER_'].print("s> CONNECT FAIL")
         return client.RC.ERROR
 
 
