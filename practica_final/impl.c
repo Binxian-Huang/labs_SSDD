@@ -148,44 +148,124 @@ int connect_user(char *alias, char *ip, int port) {
     }
 
     char userdata_path[] = "/user_data.txt";
+    char temp_path[] = "/temp.txt";
     char *datafilename = malloc(strlen(userdir_path) + strlen(userdata_path) + 1);
+    char *tempfilename = malloc(strlen(userdir_path) + strlen(temp_path) + 1);
     strcpy(datafilename, userdir_path);
     strcat(datafilename, userdata_path);
+    strcpy(tempfilename, userdir_path);
+    strcat(tempfilename, temp_path);
     fprintf(stdout, "Data file: %s\n", datafilename);
+    fprintf(stdout, "Temp file: %s\n", tempfilename);
 
     if (access(datafilename, F_OK) != -1) {
-        FILE* file = fopen(datafilename, "r+");
+        FILE *file = fopen(datafilename, "r");
+        FILE *temp = fopen(tempfilename, "w");
         char line[256];
-        while (fgets(line, 256, file) != NULL) {
+        while (fgets(line, sizeof(line), file) != NULL) {
             if (strstr(line, "Online: ") != NULL) {
                 int current_online = atoi(line + strlen("Online: "));
                 fprintf(stdout, "Current online: %d\n", current_online);
                 if (current_online == 1) {
                     fprintf(stdout, "Client already online\n");
                     free(datafilename);
+                    free(tempfilename);
                     free(userdir_path);
                     fclose(file);
+                    fclose(temp);
+                    remove(tempfilename);
                     return 2;
                 } else {
-                    fseek(file, -(strlen(line)), SEEK_CUR);
-                    fprintf(file, "Online: %d\n", 1);
+                    fprintf(temp, "Online: %d\n", 1);
                 }
-            }
-            if (strstr(line, "IP: ") != NULL) {
-                fseek(file, -(strlen(line)), SEEK_CUR);
-                fprintf(file, "IP: %s\n", ip);
+            } else if (strstr(line, "IP: ") != NULL) {
+                fprintf(temp, "IP: %s\n", ip);
             } else if (strstr(line, "Port: ") != NULL) {
-                fseek(file, -(strlen(line)), SEEK_CUR);
-                fprintf(file, "Port: %d\n", port);
+                fprintf(temp, "Port: %d\n", port);
+            } else {
+                fprintf(temp, "%s", line);
             }
         }
         free(datafilename);
+        free(tempfilename);
         free(userdir_path);
         fclose(file);
+        fclose(temp);
+        remove(datafilename);
+        rename(tempfilename, datafilename);
         return 0;
     } else {
         fprintf(stderr, "Error opening user_data file on connect_user\n");
         free(datafilename);
+        free(tempfilename);
+        free(userdir_path);
+        return 3;
+    }
+};
+
+int disconnect_user(char *alias) {
+    fprintf(stdout, "Alias: %s\n", alias);
+
+    char *userdir_path = malloc(strlen(alias) + 1);
+    strcpy(userdir_path, alias);
+
+    if (client_existing(userdir_path) == 0) {
+        fprintf(stdout, "Client not registered\n");
+        free(userdir_path);
+        return 1;
+    }
+
+    char userdata_path[] = "/user_data.txt";
+    char temp_path[] = "/temp.txt";
+    char *datafilename = malloc(strlen(userdir_path) + strlen(userdata_path) + 1);
+    char *tempfilename = malloc(strlen(userdir_path) + strlen(temp_path) + 1);
+    strcpy(datafilename, userdir_path);
+    strcat(datafilename, userdata_path);
+    strcpy(tempfilename, userdir_path);
+    strcat(tempfilename, temp_path);
+    fprintf(stdout, "Data file: %s\n", datafilename);
+    fprintf(stdout, "Temp file: %s\n", tempfilename);
+
+    if (access(datafilename, F_OK) != -1) {
+        FILE *file = fopen(datafilename, "r");
+        FILE *temp = fopen(tempfilename, "w");
+        char line[256];
+        while (fgets(line, sizeof(line), file) != NULL) {
+            if (strstr(line, "Online: ") != NULL) {
+                int current_online = atoi(line + strlen("Online: "));
+                fprintf(stdout, "Current online: %d\n", current_online);
+                if (current_online == 0) {
+                    fprintf(stdout, "Client not online\n");
+                    free(datafilename);
+                    free(tempfilename);
+                    free(userdir_path);
+                    fclose(file);
+                    fclose(temp);
+                    remove(tempfilename);
+                    return 2;
+                } else {
+                    fprintf(temp, "Online: %d\n", 0);
+                }
+            } else if (strstr(line, "IP: ") != NULL) {
+                fprintf(temp, "IP: \n");
+            } else if (strstr(line, "Port: ") != NULL) {
+                fprintf(temp, "Port: 0\n");
+            } else {
+                fprintf(temp, "%s", line);
+            }
+        }
+        free(datafilename);
+        free(tempfilename);
+        free(userdir_path);
+        fclose(file);
+        fclose(temp);
+        remove(datafilename);
+        rename(tempfilename, datafilename);
+        return 0;
+    } else {
+        fprintf(stderr, "Error opening user_data file on connect_user\n");
+        free(datafilename);
+        free(tempfilename);
         free(userdir_path);
         return 3;
     }

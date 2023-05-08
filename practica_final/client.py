@@ -188,8 +188,41 @@ class client :
     # * @return ERROR if another error occurred
     @staticmethod
     def  disconnect(user, window):
-        window['_SERVER_'].print("s> DISCONNECT OK")
-        #  Write your code here
+        try:
+            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            print('Socket created in disconnect client\n')
+        except socket.error:
+            print('Failed to create socket in disconnect client\n')
+            return client.RC.ERROR
+        try:
+            sock.connect((client._server, client._port))
+            print('Socket disconnected in connect client\n')
+        except socket.error:
+            print('Failed to connect in disconnect client\n')
+            return client.RC.ERROR
+        
+        sock.sendall(b'DISCONNECT\0')
+        sock.sendall(str(client._alias).encode() + b'\0')
+        
+        res = client.readNumber(sock)
+        try:
+            sock.shutdown(socket.SHUT_RDWR)
+            sock.close()
+            print('Socket to server closed in connect client\n')
+        except socket.error:
+            print('Failed to close socket to server in connect\n')
+
+        if res == 0:
+            window['_SERVER_'].print("s> DISCONNECT OK")
+            return client.RC.OK
+        elif res == 1:
+            window['_SERVER_'].print("s> DISCONNECT FAIL / USER DOES NOT EXIST")
+            return client.RC.USER_ERROR
+        elif res == 2:
+            window['_SERVER_'].print("s> DISCONNECT FAIL / USER NOT CONNECTED")
+            return client.RC.USER_ERROR
+
+        window['_SERVER_'].print("s> DISCONNECT FAIL")
         return client.RC.ERROR
 
     # *

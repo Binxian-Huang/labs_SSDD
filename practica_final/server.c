@@ -111,7 +111,6 @@ void treat_message(void *new_socket_fd) {
             strcpy(client_data.birthday, buffer);
         }
         
-
         result = register_user(&client_data);
         sprintf(buffer, "%d", result);
         if (sendMessage(socket_fd, buffer, strlen(buffer)+1) == -1) {
@@ -156,6 +155,20 @@ void treat_message(void *new_socket_fd) {
         }
 
         result = connect_user(client_data.alias, client_data.ip, client_data.port);
+        sprintf(buffer, "%d", result);
+        if (sendMessage(socket_fd, buffer, strlen(buffer)+1) == -1) {
+            fprintf(stderr, "Error sending CONNECT result in server\n");
+        } else {
+            fprintf(stdout, "CONNECT result sent correctly with value: %d\n", result);
+        }
+    } else if (strcmp(operation, "DISCONNECT") == 0) {
+        if (readLine(socket_fd, buffer, 256) == -1) {
+            fprintf(stderr, "Error reading alias of connect in server\n");
+        } else {
+            strcpy(client_data.alias, buffer);
+        }
+
+        result = disconnect_user(client_data.alias);
         sprintf(buffer, "%d", result);
         if (sendMessage(socket_fd, buffer, strlen(buffer)+1) == -1) {
             fprintf(stderr, "Error sending CONNECT result in server\n");
