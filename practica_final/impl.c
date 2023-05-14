@@ -4,6 +4,7 @@
 #include <sys/stat.h>
 #include <string.h>
 #include <unistd.h>
+#include <limits.h>
 #include "server.h"
 
 int client_existing (char *userdir_path) {
@@ -17,10 +18,110 @@ int client_existing (char *userdir_path) {
     return 1;                                                   // If directory exists, client registered
 };
 
+int client_connected (char *alias) {
+    char *userdir_path = malloc(strlen(alias) + 1);
+    strcpy(userdir_path, alias);
+
+    char userdata_path[] = "/user_data.txt";
+    char *datafilename = malloc(strlen(userdir_path) + strlen(userdata_path) + 1);
+    strcpy(datafilename, userdir_path);
+    strcat(datafilename, userdata_path);
+    fprintf(stdout, "Data file: %s\n", datafilename);
+
+    if (access(datafilename, F_OK) != -1) {
+        FILE *file = fopen(datafilename, "r");
+        char line[256];
+        while (fgets(line, sizeof(line), file) != NULL) {
+            if (strstr(line, "Online: ") != NULL) {
+                int current_online = atoi(line + strlen("Online: "));
+                fprintf(stdout, "Current online: %d\n", current_online);
+                if (current_online == 1) {
+                    fprintf(stdout, "Client already online\n");
+                    fclose(file);
+                    free(datafilename);
+                    free(userdir_path);
+                    return 1;
+                } else if (current_online == 0) {
+                    fprintf(stdout, "Client not online\n");
+                    fclose(file);
+                    free(datafilename);
+                    free(userdir_path);
+                    return 0;
+                } else {
+                    fprintf(stderr, "Error reading online status\n");
+                    fclose(file);
+                    free(datafilename);
+                    free(userdir_path);
+                    return -1;
+                }
+            }
+        }
+    }
+    fprintf(stderr, "Error opening user_data file on connect_user\n");
+    free(datafilename);
+    free(userdir_path);
+    return -1;
+}
+
+int get_identifier (char *alias) {
+    fprintf(stdout, "Alias: %s\n", alias);
+
+    char *userdir_path = malloc(strlen(alias) + 1);
+    strcpy(userdir_path, alias);
+
+    char userdata_path[] = "/user_data.txt";
+    char temp_path[] = "/temp.txt";
+    char *datafilename = malloc(strlen(userdir_path) + strlen(userdata_path) + 1);
+    char *tempfilename = malloc(strlen(userdir_path) + strlen(temp_path) + 1);
+    strcpy(datafilename, userdir_path);
+    strcat(datafilename, userdata_path);
+    strcpy(tempfilename, userdir_path);
+    strcat(tempfilename, temp_path);
+    fprintf(stdout, "Data file: %s\n", datafilename);
+    fprintf(stdout, "Temp file: %s\n", tempfilename);
+
+    if (access(datafilename, F_OK) != -1) {
+        FILE *file = fopen(datafilename, "r");
+        FILE *temp = fopen(tempfilename, "w");
+        char line[256];
+        unsigned int identifier;
+        while (fgets(line, sizeof(line), file) != NULL) {
+            if (strstr(line, "Identifier: ") != NULL) {
+                identifier = atoi(line + strlen("Identifier: "));
+                fprintf(stdout, "Current identifier:  %d\n", identifier);
+                if (identifier == UINT_MAX) {
+                    identifier = 1;
+                } else {
+                    identifier++;
+                }
+                fprintf(stdout, "New identifier:  %d\n", identifier);
+                fprintf(temp, "Identifier: %d\n", identifier);
+            } else {
+                fprintf(temp, "%s", line);
+            }
+        }
+        fclose(file);
+        fclose(temp);
+        remove(datafilename);
+        rename(tempfilename, datafilename);
+        free(datafilename);
+        free(tempfilename);
+        free(userdir_path);
+        return identifier;
+    } else {
+        fprintf(stderr, "Error opening user_data file on connect_user\n");
+        free(datafilename);
+        free(tempfilename);
+        free(userdir_path);
+        return -1;
+    }
+}
+
 int register_user (struct client_data *client) {
     fprintf(stdout, "Username: %s\n", client->username);
     fprintf(stdout, "Alias: %s\n", client->alias);
     fprintf(stdout, "Birthday: %s\n", client->birthday);
+    fprintf(stdout, "Identifier: %d\n", client->identifier);
     fprintf(stdout, "Online: %d\n", client->online);
     fprintf(stdout, "IP: %s\n", client->ip);
     fprintf(stdout, "Port: %d\n", client->port);
@@ -63,6 +164,7 @@ int register_user (struct client_data *client) {
         fprintf(file, "Username: %s\n", client->username);
         fprintf(file, "Alias: %s\n", client->alias);
         fprintf(file, "Birthday: %s\n", client->birthday);
+        fprintf(file, "Identifier: %d\n", client->identifier);
         fprintf(file, "Online: %d\n", client->online);
         fprintf(file, "IP: %s\n", client->ip);
         fprintf(file, "Port: %d\n", client->port);
@@ -168,12 +270,12 @@ int connect_user(char *alias, char *ip, int port) {
                 fprintf(stdout, "Current online: %d\n", current_online);
                 if (current_online == 1) {
                     fprintf(stdout, "Client already online\n");
-                    free(datafilename);
-                    free(tempfilename);
-                    free(userdir_path);
                     fclose(file);
                     fclose(temp);
                     remove(tempfilename);
+                    free(datafilename);
+                    free(tempfilename);
+                    free(userdir_path);
                     return 2;
                 } else {
                     fprintf(temp, "Online: %d\n", 1);
@@ -186,13 +288,13 @@ int connect_user(char *alias, char *ip, int port) {
                 fprintf(temp, "%s", line);
             }
         }
-        free(datafilename);
-        free(tempfilename);
-        free(userdir_path);
         fclose(file);
         fclose(temp);
         remove(datafilename);
         rename(tempfilename, datafilename);
+        free(datafilename);
+        free(tempfilename);
+        free(userdir_path);
         return 0;
     } else {
         fprintf(stderr, "Error opening user_data file on connect_user\n");
@@ -236,12 +338,12 @@ int disconnect_user(char *alias) {
                 fprintf(stdout, "Current online: %d\n", current_online);
                 if (current_online == 0) {
                     fprintf(stdout, "Client not online\n");
-                    free(datafilename);
-                    free(tempfilename);
-                    free(userdir_path);
                     fclose(file);
                     fclose(temp);
                     remove(tempfilename);
+                    free(datafilename);
+                    free(tempfilename);
+                    free(userdir_path);
                     return 2;
                 } else {
                     fprintf(temp, "Online: %d\n", 0);
@@ -254,13 +356,13 @@ int disconnect_user(char *alias) {
                 fprintf(temp, "%s", line);
             }
         }
-        free(datafilename);
-        free(tempfilename);
-        free(userdir_path);
         fclose(file);
         fclose(temp);
         remove(datafilename);
         rename(tempfilename, datafilename);
+        free(datafilename);
+        free(tempfilename);
+        free(userdir_path);
         return 0;
     } else {
         fprintf(stderr, "Error opening user_data file on connect_user\n");
@@ -268,5 +370,61 @@ int disconnect_user(char *alias) {
         free(tempfilename);
         free(userdir_path);
         return 3;
+    }
+};
+
+int save_message(char *receiver, struct message_data *message) {
+    fprintf(stdout, "Sender: %s\n", message->sender);
+    fprintf(stdout, "Receiver: %s\n", receiver);
+    fprintf(stdout, "Message: %s\n", message->message);
+
+    char *senderdir_path = malloc(strlen(message->sender) + 1);
+    char *receiverdir_path = malloc(strlen(receiver) + 1);
+    strcpy(senderdir_path, message->sender);
+    strcpy(receiverdir_path, receiver);
+
+    if (client_existing(senderdir_path) == 0) {
+        fprintf(stdout, "Sender not registered\n");
+        free(senderdir_path);
+        free(receiverdir_path);
+        return 1;
+    }
+    if (client_existing(receiverdir_path) == 0) {
+        fprintf(stdout, "Receiver not registered\n");
+        free(senderdir_path);
+        free(receiverdir_path);
+        return 1;
+    }
+    if (client_connected(message->sender) == 0) {
+        fprintf(stdout, "Sender not online\n");
+        free(senderdir_path);
+        free(receiverdir_path);
+        return 1;
+    }
+
+    message->identifier = get_identifier(receiver);
+    fprintf(stdout, "Identifier: %d\n", message->identifier);
+
+    char receivermessages_path[] = "/user_messages.txt";
+    char *messagesfilename = malloc(strlen(receiverdir_path) + strlen(receivermessages_path) + 1);
+    strcpy(messagesfilename, receiverdir_path);
+    strcat(messagesfilename, receivermessages_path);
+    fprintf(stdout, "Messages file: %s\n", messagesfilename);
+
+    FILE *file = fopen(messagesfilename, "a");
+    if (file != NULL) {
+        fwrite(message, sizeof(struct message_data), 1, file);
+        
+        fclose(file);
+        free(messagesfilename);
+        free(senderdir_path);
+        free(receiverdir_path);
+        return 0;
+    } else {
+        fprintf(stderr, "Error opening message file of receiver on send server\n");
+        free(messagesfilename);
+        free(senderdir_path);
+        free(receiverdir_path);
+        return 2;
     }
 };

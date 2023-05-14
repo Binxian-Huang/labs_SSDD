@@ -25,6 +25,7 @@ class client :
     _username = None
     _alias = None
     _date = None
+    _listen_socket = None
 
     # ******************** METHODS *******************
     @staticmethod
@@ -36,6 +37,17 @@ class client :
                 break
             a += msg.decode()
         return(int(a,10))
+    
+    @staticmethod
+    def readMessage(sock):
+        a = ''
+        while True:
+            msg = sock.recv(1)
+            if (msg == b'\0'):
+                break
+            a += msg.decode()
+        print("Message is: ", a)
+        return a
     # *
     # * @param user - User name to register in the system
     # *
@@ -58,7 +70,7 @@ class client :
             return client.RC.ERROR
         
         sock.sendall(b'REGISTER\0')
-        sock.sendall(str(client._username).encode() + b'\0')
+        sock.sendall(str(user).encode() + b'\0')
         sock.sendall(str(client._alias).encode() + b'\0')
         sock.sendall(str(client._date).encode() + b'\0')
         
@@ -103,7 +115,7 @@ class client :
             return client.RC.ERROR
         
         sock.sendall(b'UNREGISTER\0')
-        sock.sendall(str(client._alias).encode() + b'\0')
+        sock.sendall(str(user).encode() + b'\0')
         
         res = client.readNumber(sock)
         try:
@@ -122,6 +134,34 @@ class client :
         
         window['_SERVER_'].print("s> UNREGISTER FAIL")
         return client.RC.ERROR
+
+
+    @staticmethod
+    def  listening_messages(listen_socket, window):
+        try:
+            listen_socket.listen(1)
+            print('Listening messages in socket client\n')
+        except socket.error:
+            print('Failed to listen messages in socket client\n')
+            return client.RC.ERROR
+
+        while True:
+            try:
+                listen_socket.accept()
+                print('Accepted message in socket client\n')
+                oper = client.readMessage(listen_socket)
+                if oper == "ID":
+                    id = client.readNumber(listen_socket)
+                    window['_SERVER_'].print(f"s> SEND MESSAGE {id} OK")
+                elif oper == "MESSAGE":
+                    sender = client.readMessage(listen_socket)
+                    message = client.readMessage(listen_socket)
+                    identif = client.readNumber(listen_socket)
+                    window['_SERVER_'].print(f"s> MESSAGE {identif} FROM {sender}\n{message}\nEND")
+
+            except socket.error:
+                print('Closing thread of socket client\n')
+                return client.RC.ERROR
 
 
     # *
@@ -145,17 +185,17 @@ class client :
             print('Failed to connect to server in connect client\n')
             return client.RC.ERROR
         try:
-            client_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            client._listen_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             print('Socket client for listen created in connect client\n')
-            client_sock.bind(('0.0.0.0', 0))
-            client_port = client_sock.getsockname()[1]
+            client._listen_socket.bind(('0.0.0.0', 0))
+            client_port = client._listen_socket.getsockname()[1]
         except socket.error:
             print('Failed to create socket client for listen in connect client\n')
             return client.RC.ERROR
 
         
         sock.sendall(b'CONNECT\0')
-        sock.sendall(str(client._alias).encode() + b'\0')
+        sock.sendall(str(user).encode() + b'\0')
         sock.sendall(str(client_port).encode() + b'\0')
         
         res = client.readNumber(sock)
@@ -168,6 +208,9 @@ class client :
 
         if res == 0:
             window['_SERVER_'].print("s> CONNECT OK")
+            listen_thread = Thread(target=client.listening_messages, daemon=True, args=(client._listen_socket, window))
+            listen_thread.start()
+            print('Thread for listening messages started in connect client\n')
             return client.RC.OK
         elif res == 1:
             window['_SERVER_'].print("s> CONNECT FAIL, USER DOES NOT EXIST")
@@ -196,24 +239,30 @@ class client :
             return client.RC.ERROR
         try:
             sock.connect((client._server, client._port))
-            print('Socket disconnected in connect client\n')
+            print('Socket connected in disconnect client\n')
         except socket.error:
             print('Failed to connect in disconnect client\n')
             return client.RC.ERROR
         
         sock.sendall(b'DISCONNECT\0')
-        sock.sendall(str(client._alias).encode() + b'\0')
+        sock.sendall(str(user).encode() + b'\0')
         
         res = client.readNumber(sock)
         try:
             sock.shutdown(socket.SHUT_RDWR)
             sock.close()
-            print('Socket to server closed in connect client\n')
+            print('Socket to server closed in disconnect client\n')
         except socket.error:
-            print('Failed to close socket to server in connect\n')
+            print('Failed to close socket to server in disconnect\n')
 
         if res == 0:
             window['_SERVER_'].print("s> DISCONNECT OK")
+            try:
+                client._listen_socket.shutdown(socket.SHUT_RDWR)
+                client._listen_socket.close()
+                print('Listening socket closed in disconnect client\n')
+            except socket.error:
+                print('Failed to close listening socket in disconnect\n')
             return client.RC.OK
         elif res == 1:
             window['_SERVER_'].print("s> DISCONNECT FAIL / USER DOES NOT EXIST")
@@ -234,6 +283,55 @@ class client :
     # * @return ERROR the user does not exist or another error occurred
     @staticmethod
     def  send(user, message, window):
+        try:
+            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            print('Socket created in send client\n')
+        except socket.error:
+            print('Failed to create socket in send client\n')
+            return client.RC.ERROR
+        try:
+            sock.connect((client._server, client._port))
+            print('Socket connected in send client\n')
+        except socket.error:
+            print('Failed to connect to server in send client\n')
+            return client.RC.ERROR
+        
+        sock.sendall(b'SEND\0')
+        sock.sendall(str(client._alias).encode() + b'\0')
+        sock.sendall(str(user).encode() + b'\0')
+        sock.sendall(str(message).encode() + b'\0')
+        
+        res = client.readNumber(sock)
+
+        if res == 0:
+            identificator = client.readNumber(sock)
+            window['_SERVER_'].print(f"s> SEND OK - MESSAGE {identificator}")
+            try:
+                sock.shutdown(socket.SHUT_RDWR)
+                sock.close()
+                print('Socket closed in send client\n')
+            except socket.error:
+                print('Failed to close socket in send\n')
+            return client.RC.OK
+        elif res == 1:
+            window['_SERVER_'].print("s> SEND FAIL / USER DOES NOT EXIST")
+            try:
+                sock.shutdown(socket.SHUT_RDWR)
+                sock.close()
+                print('Socket closed in send client\n')
+            except socket.error:
+                print('Failed to close socket in send\n')
+            return client.RC.USER_ERROR
+        
+        try:
+            sock.shutdown(socket.SHUT_RDWR)
+            sock.close()
+            print('Socket closed in send client\n')
+        except socket.error:
+            print('Failed to close socket in send\n')
+        window['_SERVER_'].print("s> SEND FAIL")
+        return client.RC.ERROR
+    
         window['_SERVER_'].print("s> SEND MESSAGE OK")
         print("SEND " + user + " " + message)
         #  Write your code here

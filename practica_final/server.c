@@ -163,7 +163,7 @@ void treat_message(void *new_socket_fd) {
         }
     } else if (strcmp(operation, "DISCONNECT") == 0) {
         if (readLine(socket_fd, buffer, 256) == -1) {
-            fprintf(stderr, "Error reading alias of connect in server\n");
+            fprintf(stderr, "Error reading alias of disconnect in server\n");
         } else {
             strcpy(client_data.alias, buffer);
         }
@@ -171,11 +171,45 @@ void treat_message(void *new_socket_fd) {
         result = disconnect_user(client_data.alias);
         sprintf(buffer, "%d", result);
         if (sendMessage(socket_fd, buffer, strlen(buffer)+1) == -1) {
-            fprintf(stderr, "Error sending CONNECT result in server\n");
+            fprintf(stderr, "Error sending DISCONNECT result in server\n");
         } else {
-            fprintf(stdout, "CONNECT result sent correctly with value: %d\n", result);
+            fprintf(stdout, "DISCONNECT result sent correctly with value: %d\n", result);
         }
-    }
+    } else if (strcmp(operation, "SEND") == 0) {
+        struct message_data message_data;
+        char receiver_alias[20];
+        if (readLine(socket_fd, buffer, 256) == -1) {
+            fprintf(stderr, "Error reading alias of send in server\n");
+        } else {
+            strcpy(message_data.sender, buffer);
+        }
+        if (readLine(socket_fd, buffer, 256) == -1) {
+            fprintf(stderr, "Error reading receiver of send in server\n");
+        } else {
+            strcpy(receiver_alias, buffer);
+        }
+        if (readLine(socket_fd, buffer, 256) == -1) {
+            fprintf(stderr, "Error reading message of send in server\n");
+        } else {
+            strcpy(message_data.message, buffer);
+        }
+
+        result = save_message(receiver_alias, &message_data);
+        sprintf(buffer, "%d", result);
+        if (sendMessage(socket_fd, buffer, strlen(buffer)+1) == -1) {
+            fprintf(stderr, "Error sending SEND result in server\n");
+        } else {
+            fprintf(stdout, "SEND result sent correctly with value: %d\n", result);
+        }
+        if (result == 0) {
+            sprintf(buffer, "%d", message_data.identifier);
+            if (sendMessage(socket_fd, buffer, strlen(buffer)+1) == -1) {
+                fprintf(stderr, "Error sending SEND message identifier in server\n");
+            } else {
+                fprintf(stdout, "SEND message identifier sent correctly with value: %d\n", message_data.identifier);
+            }
+        }
+    } 
    
         /*
         case "UNREGISTER":                                     // if operation == 1 call set_value()
