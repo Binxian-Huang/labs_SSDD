@@ -14,6 +14,8 @@ struct message_data {
     char message[100];
 };
 
+int sendMessage(int socket_fd, char *buffer, int size);
+
 int register_user(struct client_data *client);
 
 int unregister_user(char *username);
@@ -23,3 +25,5 @@ int connect_user(char *alias, char *ip, int port);
 int disconnect_user(char *alias);
 
 int save_message(char *receiver, struct message_data *message);
+
+int send_message(char *alias);

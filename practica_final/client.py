@@ -46,7 +46,6 @@ class client :
             if (msg == b'\0'):
                 break
             a += msg.decode()
-        print("Message is: ", a)
         return a
     # *
     # * @param user - User name to register in the system
@@ -147,16 +146,15 @@ class client :
 
         while True:
             try:
-                listen_socket.accept()
-                print('Accepted message in socket client\n')
-                oper = client.readMessage(listen_socket)
-                if oper == "ID":
-                    id = client.readNumber(listen_socket)
+                client_socket, address = listen_socket.accept()
+                oper = client.readMessage(client_socket)
+                if oper == "SEND_MESSAGE_ACK":
+                    id = client.readNumber(client_socket)
                     window['_SERVER_'].print(f"s> SEND MESSAGE {id} OK")
-                elif oper == "MESSAGE":
-                    sender = client.readMessage(listen_socket)
-                    message = client.readMessage(listen_socket)
-                    identif = client.readNumber(listen_socket)
+                elif oper == "SEND_MESSAGE":
+                    sender = client.readMessage(client_socket)
+                    identif = client.readNumber(client_socket)
+                    message = client.readMessage(client_socket)
                     window['_SERVER_'].print(f"s> MESSAGE {identif} FROM {sender}\n{message}\nEND")
 
             except socket.error:
