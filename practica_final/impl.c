@@ -582,3 +582,35 @@ int send_message(char *alias) {
         return 0;
     }
 }
+
+int connected_users(char *alias, char (*user_names)[20], int *number_connected_users) {
+    DIR *dir;
+    struct dirent *ent;
+    fprintf(stdout, "connected_users: %d\n", *number_connected_users);
+    if (client_existing(alias) != 1) {
+        fprintf(stderr, "Client not registered\n");
+        return 2;
+    }
+
+    if (client_connected(alias) != 1) {
+        fprintf(stderr, "Client not online\n");
+        return 1;
+    }
+
+    if ((dir = opendir(".")) != NULL) {
+        while ((ent = readdir(dir)) != NULL) {
+            if (ent->d_type == DT_DIR && strcmp(ent->d_name, ".") != 0 && strcmp(ent->d_name, "..") != 0) {
+                char curr_user[20];
+                strcpy(curr_user, ent->d_name);
+                if (client_connected(curr_user) == 1) {
+                    strcpy(user_names[*number_connected_users], ent->d_name);
+                    (*number_connected_users)++;
+                }
+            }
+        }
+        closedir(dir);
+        return 0;
+    }
+    fprintf(stderr, "Error getting current working directory on connected_users server\n");
+    return 2;
+}

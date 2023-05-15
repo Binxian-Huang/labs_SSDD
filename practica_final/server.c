@@ -199,6 +199,33 @@ void treat_message(void *new_socket_fd) {
         } else {
             fprintf(stdout, "All messages sent to client\n");
         }
+    } else if (strcmp(operation, "CONNECTEDUSERS") == 0) {
+        char alias[20];
+        char user_names[20][20];
+        int number_connected_users = 0;
+
+        if (readLine(socket_fd, buffer, 256) == -1) {
+            fprintf(stderr, "Error reading alias of send in server\n");
+        } else {
+            strcpy(alias, buffer);
+        }
+
+        result = connected_users(alias, user_names, &number_connected_users);
+        sprintf(buffer, "%d", result);
+        if (sendMessage(socket_fd, buffer, strlen(buffer)+1) == -1) {
+            fprintf(stderr, "Error sending SEND result in server\n");
+        }
+
+        sprintf(buffer, "%d", number_connected_users);
+        if (sendMessage(socket_fd, buffer, strlen(buffer)+1) == -1) {
+            fprintf(stderr, "Error sending number of connected users in server\n");
+        }
+        for (int i = 0; i < number_connected_users; i++) {
+            sprintf(buffer, "%s", user_names[i]);
+            if (sendMessage(socket_fd, buffer, strlen(buffer)+1) == -1) {
+                fprintf(stderr, "Error sending connected user alias in server\n");
+            }
+        }
     } else {
         fprintf(stderr, "Operation not recognized\n");
     }

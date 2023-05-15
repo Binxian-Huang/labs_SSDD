@@ -27,3 +27,5 @@ int disconnect_user(char *alias);
 int save_message(char *receiver, struct message_data *message);
 
 int send_message(char *alias);
+
+int connected_users(char *alias, char (*user_names)[20], int *number_connected_users);

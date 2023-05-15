@@ -329,11 +329,6 @@ class client :
             print('Failed to close socket in send\n')
         window['_SERVER_'].print("s> SEND FAIL")
         return client.RC.ERROR
-    
-        window['_SERVER_'].print("s> SEND MESSAGE OK")
-        print("SEND " + user + " " + message)
-        #  Write your code here
-        return client.RC.ERROR
 
     # *
     # * @param user    - Receiver user name
@@ -353,6 +348,59 @@ class client :
 
     @staticmethod
     def  connectedUsers(window):
+        try:
+            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            print('Socket created in connectedusers client\n')
+        except socket.error:
+            print('Failed to create socket in connectedusers client\n')
+            return client.RC.ERROR
+        try:
+            sock.connect((client._server, client._port))
+            print('Socket connected in connectedusers client\n')
+        except socket.error:
+            print('Failed to connect to server in connectedusers client\n')
+            return client.RC.ERROR
+        
+        sock.sendall(b'CONNECTEDUSERS\0')
+        sock.sendall(str(client._alias).encode() + b'\0')
+        
+        res = client.readNumber(sock)
+
+        if res == 0:
+            number = client.readNumber(sock)
+            print(f"Number of connected users: {number}")
+            clients = []
+            while len(clients) < number:
+                clients.append(client.readMessage(sock))
+            clients_str = ", ".join(clients)
+            print(f"Connected users: {clients_str}")
+            window['_SERVER_'].print(f"s> CONNECTED USERS ({number} users connected) OK - {clients_str}")
+            try:
+                sock.shutdown(socket.SHUT_RDWR)
+                sock.close()
+                print('Socket closed in connectedusers client\n')
+            except socket.error:
+                print('Failed to close socket in connectedusers\n')
+            return client.RC.OK
+        elif res == 1:
+            window['_SERVER_'].print("s> CONNECTED USERS FAIL / USER IS NOT CONNECTED")
+            try:
+                sock.shutdown(socket.SHUT_RDWR)
+                sock.close()
+                print('Socket closed in connectedusers client\n')
+            except socket.error:
+                print('Failed to close socket in connectedusers\n')
+            return client.RC.USER_ERROR
+        
+        try:
+            sock.shutdown(socket.SHUT_RDWR)
+            sock.close()
+            print('Socket closed in connectedusers client\n')
+        except socket.error:
+            print('Failed to close socket in connectedusers\n')
+        window['_SERVER_'].print("s> CONNECTED USERS FAIL")
+        return client.RC.ERROR
+    
         window['_SERVER_'].print("s> CONNECTED USERS OK")
         #  Write your code here
         return client.RC.ERROR
