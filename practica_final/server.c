@@ -260,8 +260,6 @@ int main(int argc, char *argv[]) {
     pthread_t t_id;
     pthread_attr_t t_attr;
     struct sockaddr_in server_addr, client_addr;
-    struct addrinfo hints, *res;
-    struct sockaddr_in *ipv4;
     socklen_t size;
     int socket_fd, new_socket_fd;
     int val = 1;
@@ -296,30 +294,25 @@ int main(int argc, char *argv[]) {
         exit(1);
     }
 
-    memset(&hints, 0, sizeof(hints));
-    hints.ai_family = AF_INET;
-    hints.ai_socktype = SOCK_STREAM;
-    char *host = "localhost";
+    char hostname[256];
+    char *ip;
+    struct hostent *host_entry;
 
-    if (getaddrinfo(host, NULL, &hints, &res) != 0) {
-        fprintf(stderr, "Error getting address info on server\n");
+    if (gethostname(hostname, sizeof(hostname)) == -1) {
+        fprintf(stderr, "Error getting hostname on server\n");
         exit(1);
     }
 
-    for (struct addrinfo *addr = res; addr != NULL; addr = addr->ai_next) {
-        ipv4 = (struct sockaddr_in *)addr->ai_addr;
-        char ip[INET_ADDRSTRLEN];
-        if (inet_ntop(AF_INET, &ipv4->sin_addr, ip, sizeof(ip)) != NULL) {
-            fprintf(stdout, "s> init server %s:%d\n", ip, ntohs(server_addr.sin_port));
-            fprintf(stdout, "s> \n");
-            freeaddrinfo(res);
-            break;
-        }
+    host_entry = gethostbyname(hostname);
+    if (host_entry == NULL) {
+        fprintf(stderr, "Error getting host information on server\n");
+        exit(1);
     }
-    /*
-    fprintf(stdout, "s> init server %s:%d\n", inet_ntoa(server_addr.sin_addr), ntohs(server_addr.sin_port));
+
+    ip = inet_ntoa(*(struct in_addr*) host_entry->h_addr);
+    fprintf(stdout, "s> init server %s:%d\n", ip, ntohs(server_addr.sin_port));
     fprintf(stdout, "s> \n");
-    */
+    
     size = sizeof(client_addr);
     while (1) {
         pthread_attr_init(&t_attr);

@@ -1,7 +1,7 @@
 # Compilador del make
 CC=gcc
 # Opciones de compilación usadas
-CFLAGS=-g -Wall
+CFLAGS=-g -Wall -pthread
 # Lista de ejecutables
 BIN_FILES=server
 # Ninguna opción del preprocesador implementada

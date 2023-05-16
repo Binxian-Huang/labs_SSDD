@@ -1,1 +1,1 @@
-python3 ./client.py -s localhost -p 8888
+python3 ./client.py -s "127.0.1.1" -p 8888
