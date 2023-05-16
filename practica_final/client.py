@@ -379,12 +379,10 @@ class client :
 
         if res == 0:
             number = client.readNumber(sock)
-            print(f"Number of connected users: {number}")
             clients = []
             while len(clients) < number:
                 clients.append(client.readMessage(sock))
             clients_str = ", ".join(clients)
-            print(f"Connected users: {clients_str}")
             window['_SERVER_'].print(f"s> CONNECTED USERS ({number} users connected) OK - {clients_str}")
             try:
                 sock.shutdown(socket.SHUT_RDWR)
