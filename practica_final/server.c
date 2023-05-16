@@ -149,14 +149,17 @@ void treat_message(void *new_socket_fd) {
         if (sendMessage(socket_fd, buffer, strlen(buffer)+1) == -1) {
             fprintf(stderr, "Error sending CONNECT result in server\n");
         }
-        //Every time a client connects, send all messages to him (the function will check if he has messages pending)
-        int sending = send_message(client_data.alias);
-        if (sending == -1) {
-            fprintf(stderr, "Error sending message in server\n");
-        } else if (sending == 0) {
-            fprintf(stdout, "No messages to send to client in server\n");
-        } else {
-            fprintf(stdout, "All messages sent to client\n");
+        
+        if (result == 0) {
+            //Every time a client connects, send all messages to him (the function will check if he has messages pending)
+            int sending = send_message(client_data.alias);
+            if (sending == -1) {
+                fprintf(stderr, "Error sending message in server\n");
+            } else if (sending == 0) {
+                fprintf(stdout, "No messages to send to client in server\n");
+            } else {
+                fprintf(stdout, "All messages sent to client\n");
+            }
         }
     } else if (strcmp(operation, "DISCONNECT") == 0) {
         //read client alias to disconnect
@@ -204,15 +207,16 @@ void treat_message(void *new_socket_fd) {
             if (sendMessage(socket_fd, buffer, strlen(buffer)+1) == -1) {
                 fprintf(stderr, "Error sending SEND message identifier in server\n");
             }
-        }
-        //Every time saved a message, try to send it to the receiver (the function will check if he is online)
-        int sending = send_message(receiver_alias);
-        if (sending == -1) {
-            fprintf(stderr, "Error sending message in server\n");
-        } else if (sending == 0) {
-            fprintf(stdout, "No messages to send to client in server\n");
-        } else {
-            fprintf(stdout, "All messages sent to client\n");
+
+            //Every time saved a message, try to send it to the receiver (the function will check if he is online)
+            int sending = send_message(receiver_alias);
+            if (sending == -1) {
+                fprintf(stderr, "Error sending message in server\n");
+            } else if (sending == 0) {
+                fprintf(stdout, "No messages to send to client in server\n");
+            } else {
+                fprintf(stdout, "All messages sent to client\n");
+            }
         }
     } else if (strcmp(operation, "CONNECTEDUSERS") == 0) {
         char alias[20];

@@ -411,11 +411,6 @@ class client :
             print('Failed to close socket in connectedusers\n')
         window['_SERVER_'].print("s> CONNECTED USERS FAIL")
         return client.RC.ERROR
-    
-        window['_SERVER_'].print("s> CONNECTED USERS OK")
-        #  Write your code here
-        return client.RC.ERROR
-
 
     @staticmethod
     def window_register():
