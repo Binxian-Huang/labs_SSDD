@@ -5,6 +5,7 @@ from enum import Enum
 import argparse
 from threading import Thread, Condition
 import socket
+from zeep import Client
 
 #python3 ./client.py -s <IP> -p <PUERTO>
 #python3 ./client.py -s localhost -p 8888
@@ -28,6 +29,7 @@ class client :
     _listen_socket = None
 
     # ******************** METHODS *******************
+    """Method thar reads a number from a socket"""
     @staticmethod
     def readNumber(sock):
         a = ''
@@ -38,6 +40,7 @@ class client :
             a += msg.decode()
         return(int(a,10))
     
+    """Method thar reads a message from a socket"""
     @staticmethod
     def readMessage(sock):
         a = ''
@@ -134,7 +137,7 @@ class client :
         window['_SERVER_'].print("s> UNREGISTER FAIL")
         return client.RC.ERROR
 
-
+    """Method called from thread to listen messages while connected"""
     @staticmethod
     def  listening_messages(listen_socket, window):
         try:
@@ -144,6 +147,7 @@ class client :
             print('Failed to listen messages in socket client\n')
             return client.RC.ERROR
 
+        # While can connect to socket, wait connections. When socket error or socket closed, exit thread
         while True:
             try:
                 client_socket, address = listen_socket.accept()
@@ -206,6 +210,7 @@ class client :
 
         if res == 0:
             window['_SERVER_'].print("s> CONNECT OK")
+            # If connect ok, start thread to listen messages
             listen_thread = Thread(target=client.listening_messages, daemon=True, args=(client._listen_socket, window))
             listen_thread.start()
             print('Thread for listening messages started in connect client\n')
@@ -255,6 +260,7 @@ class client :
 
         if res == 0:
             window['_SERVER_'].print("s> DISCONNECT OK")
+            # If disconnect ok, close listening socket
             try:
                 client._listen_socket.shutdown(socket.SHUT_RDWR)
                 client._listen_socket.close()
@@ -294,10 +300,15 @@ class client :
             print('Failed to connect to server in send client\n')
             return client.RC.ERROR
         
+        # Before sending message, call web service to convert text
+        web_service = Client('http://localhost:8000/convert_text?wsdl')
+        converted_message = web_service.service.convert_text(message)
+        print(f"Message: {message}\nConverted to: {converted_message}\n")
+        
         sock.sendall(b'SEND\0')
         sock.sendall(str(client._alias).encode() + b'\0')
         sock.sendall(str(user).encode() + b'\0')
-        sock.sendall(str(message).encode() + b'\0')
+        sock.sendall(str(converted_message).encode() + b'\0')
         
         res = client.readNumber(sock)
 

@@ -11,17 +11,19 @@
 #include <sys/socket.h>
 #include "server.h"
 
+/*Function that receives the name of user directory, and check if can be opened*/
 int client_existing (char *userdir_path) {
     DIR *dir;
 
     if ((dir = opendir(userdir_path)) == NULL) {
-        return 0;                                               // If directory doesn't exist, client not registered
+        return 0;                                                                           // If directory doesn't exist, client not registered
     }
 
     closedir(dir);
-    return 1;                                                   // If directory exists, client registered
+    return 1;                                                                               // If directory exists, client registered
 };
 
+/*Function that receives and alias, and check alias data file if connected*/
 int client_connected (char *alias) {
     char *userdir_path = malloc(strlen(alias) + 1);
     strcpy(userdir_path, alias);
@@ -37,12 +39,12 @@ int client_connected (char *alias) {
         while (fgets(line, sizeof(line), file) != NULL) {
             if (strstr(line, "Online: ") != NULL) {
                 int current_online = atoi(line + strlen("Online: "));
-                if (current_online == 1) {
+                if (current_online == 1) {                                                  // If client is connected, return 1
                     fclose(file);
                     free(datafilename);
                     free(userdir_path);
                     return 1;
-                } else if (current_online == 0) {
+                } else if (current_online == 0) {                                           // If client is not connected, return 0
                     fclose(file);
                     free(datafilename);
                     free(userdir_path);
@@ -63,6 +65,7 @@ int client_connected (char *alias) {
     return -1;
 };
 
+/*Function that registers user with the values saved in data struct*/
 int register_user (struct client_data *client) {
     char *userdir_path = malloc(strlen(client->alias) + 1);
     strcpy(userdir_path, client->alias);
@@ -111,6 +114,7 @@ int register_user (struct client_data *client) {
     }
 };
 
+/*Function that unregisters the user with the alias provided as parameter*/
 int unregister_user(char *alias) {
     char *userdir_path = malloc(strlen(alias) + 1);
     strcpy(userdir_path, alias);
@@ -163,6 +167,7 @@ int unregister_user(char *alias) {
     }
 };
 
+/*Function that connects the user saving ip and port of clients listen socket*/
 int connect_user(char *alias, char *ip, int port) {
     char *userdir_path = malloc(strlen(alias) + 1);
     strcpy(userdir_path, alias);
@@ -226,6 +231,7 @@ int connect_user(char *alias, char *ip, int port) {
     }
 };
 
+/*Function that disconnects the user*/
 int disconnect_user(char *alias) {
     char *userdir_path = malloc(strlen(alias) + 1);
     strcpy(userdir_path, alias);
@@ -289,6 +295,7 @@ int disconnect_user(char *alias) {
     }
 };
 
+/*Function that gets the last messsage identifier of the user with alias proveded as parameter and returns the next identifier, or -1 if error*/
 int get_identifier (char *alias) {
     char *userdir_path = malloc(strlen(alias) + 1);
     strcpy(userdir_path, alias);
@@ -337,6 +344,7 @@ int get_identifier (char *alias) {
     }
 };
 
+/*Function that saves a message of the user*/
 int save_message(char *receiver, struct message_data *message) {
     char *senderdir_path = malloc(strlen(message->sender) + 1);
     char *receiverdir_path = malloc(strlen(receiver) + 1);
@@ -386,6 +394,7 @@ int save_message(char *receiver, struct message_data *message) {
     }
 };
 
+/*Function that sends a message through the socket*/
 int sendMessage(int socket_fd, char *buffer, int size) {
     int bytes_sent;
     int bytes_left = size;
@@ -403,6 +412,7 @@ int sendMessage(int socket_fd, char *buffer, int size) {
     }
 };
 
+/*Function that gets the ip and port of the listen socket from the client with alias provided as parameter*/
 int get_ip_and_port(char *alias, char *ip, int *port) {
     char *userdir_path = malloc(strlen(alias) + 1);
     strcpy(userdir_path, alias);
@@ -433,6 +443,7 @@ int get_ip_and_port(char *alias, char *ip, int *port) {
     return -1;
 }
 
+/*Function that enables a connection with the socket with ip and port provided and returns the socker file descriptor, or -1 if error*/
 int enable_connection(char *ip, int port) {
     int socket_fd;
     struct sockaddr_in server_addr;
@@ -456,6 +467,7 @@ int enable_connection(char *ip, int port) {
     return socket_fd;
 };
 
+/*Function that sends the ack of a message to its sender, by getting ip and port of its listen socket, enabling connection, sending message and closing connection*/
 int send_ack_to_sender(char *sender, unsigned int identifier) {
     char buffer[256];
     char sender_ip[20];
@@ -487,6 +499,7 @@ int send_ack_to_sender(char *sender, unsigned int identifier) {
     return 1;
 }
 
+/*Function that sends the messages saved to the client with alias provided as parameter*/
 int send_message(char *alias) {
     char *aliasdir_path = malloc(strlen(alias) + 1);
     strcpy(aliasdir_path, alias);
@@ -515,6 +528,7 @@ int send_message(char *alias) {
             return -1;
         }
 
+        // while messages file is not empty
         while (file != NULL) {
             char buffer[256];
             struct message_data *message = malloc(sizeof(struct message_data));
@@ -558,6 +572,7 @@ int send_message(char *alias) {
                     return -1;
                 }
 
+                // if sender of message is connected, send ack
                 if (client_connected(message->sender) == 1) {
                     if (send_ack_to_sender(message->sender, message->identifier) == -1) {
                         fprintf(stderr, "Error sending ack to sender on send_message server\n");
@@ -583,6 +598,7 @@ int send_message(char *alias) {
     }
 }
 
+/*Funtion that checks all user directory and check if connected, if connected saves its alias and increases the number of connected users*/
 int connected_users(char *alias, char (*user_names)[20], int *number_connected_users) {
     DIR *dir;
     struct dirent *ent;

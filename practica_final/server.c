@@ -14,6 +14,7 @@ pthread_mutex_t mutex_mensaje = PTHREAD_MUTEX_INITIALIZER;
 pthread_cond_t cond_mensaje = PTHREAD_COND_INITIALIZER;
 int mensaje_no_copiado = 1;
 
+/*Function that read a line form socket*/
 ssize_t readLine(int socket_fd, char *buffer, size_t size) {
     ssize_t numRead;
     size_t totRead;
@@ -60,69 +61,79 @@ ssize_t readLine(int socket_fd, char *buffer, size_t size) {
     return totRead;
 }
 
+/*Function that treat a message, called from thread*/
 void treat_message(void *new_socket_fd) {
     pthread_mutex_lock(&mutex_mensaje);
-    int socket_fd = *((int *) new_socket_fd);
+    int socket_fd = *((int *) new_socket_fd);                                       
     mensaje_no_copiado = 0;
     pthread_cond_signal(&cond_mensaje);
     pthread_mutex_unlock(&mutex_mensaje);
 
-    char buffer[256];
-    char operation[256];                            // buffer to store operation code
+    char buffer[256];                                                               // buffer for storing messages to send from socket                        
+    char operation[256];                                                            // buffer to store operation message
     int result;
-    struct client_data client_data;
+    struct client_data client_data;                                                 // struct to store client data       
+
+    // read operation message from socket
     if (readLine(socket_fd, operation, 256) == -1) {
         perror("Error reading operation code from client\n");
     } else{
         printf("Operation received on server: %s\n", operation);
     }
-
+    
+    //depending of operation, read data from socket and call function
     if (strcmp(operation, "REGISTER") == 0) {
+        //read username to register and store in struct
         if (readLine(socket_fd, buffer, 256) == -1) {
             fprintf(stderr, "Error reading username of register in server\n");
         } else {
             strcpy(client_data.username, buffer);
         }
+        //read client alias to register and store in struct
         if (readLine(socket_fd, buffer, 256) == -1) {
             fprintf(stderr, "Error reading alias of register in server\n");
         } else {
             strcpy(client_data.alias, buffer);
         }
+        //read client birthday to register and store in struct
         if (readLine(socket_fd, buffer, 256) == -1) {
             fprintf(stderr, "Error reading birthday of register in server\n");
         } else {
             strcpy(client_data.birthday, buffer);
         }
-        
+        //call function to register client, returned 0 if OK, 1 if already registered, 2 if error
         result = register_user(&client_data);
         sprintf(buffer, "%d", result);
         if (sendMessage(socket_fd, buffer, strlen(buffer)+1) == -1) {
             fprintf(stderr, "Error sending REGISTER result in server\n");
         }
     } else if (strcmp(operation, "UNREGISTER") == 0) {
+        //read client alias to unregister
         if (readLine(socket_fd, buffer, 256) == -1) {
             fprintf(stderr, "Error reading alias of unregister in server\n");
         } else {
             strcpy(client_data.alias, buffer);
         }
-
+        //call function to unregister client, returned 0 if OK, 1 if not registered, 2 if error
         result = unregister_user(client_data.alias);
         sprintf(buffer, "%d", result);
         if (sendMessage(socket_fd, buffer, strlen(buffer)+1) == -1) {
             fprintf(stderr, "Error sending UNREGISTER result in server\n");
         }
     } else if (strcmp(operation, "CONNECT") == 0) {
+        //read client alias to connect
         if (readLine(socket_fd, buffer, 256) == -1) {
             fprintf(stderr, "Error reading alias of connect in server\n");
         } else {
             strcpy(client_data.alias, buffer);
         }
+        //read client listen socket port to save
         if (readLine(socket_fd, buffer, 256) == -1) {
             fprintf(stderr, "Error reading port of connect in server\n");
         } else {
             client_data.port = atoi(buffer);
         }
-
+        //get client ip through socket
         char client_ip[INET_ADDRSTRLEN];
         struct sockaddr_in client_addr;
         socklen_t client_addr_len = sizeof(client_addr);
@@ -132,13 +143,13 @@ void treat_message(void *new_socket_fd) {
             inet_ntop(AF_INET, &client_addr.sin_addr, client_ip, sizeof(client_ip));
             strcpy(client_data.ip, client_ip);
         }
-
+        //call function to connect client, returned 0 if OK, 1 if not registered, 2 if already online, 3 if error
         result = connect_user(client_data.alias, client_data.ip, client_data.port);
         sprintf(buffer, "%d", result);
         if (sendMessage(socket_fd, buffer, strlen(buffer)+1) == -1) {
             fprintf(stderr, "Error sending CONNECT result in server\n");
         }
-
+        //Every time a client connects, send all messages to him (the function will check if he has messages pending)
         int sending = send_message(client_data.alias);
         if (sending == -1) {
             fprintf(stderr, "Error sending message in server\n");
@@ -148,12 +159,13 @@ void treat_message(void *new_socket_fd) {
             fprintf(stdout, "All messages sent to client\n");
         }
     } else if (strcmp(operation, "DISCONNECT") == 0) {
+        //read client alias to disconnect
         if (readLine(socket_fd, buffer, 256) == -1) {
             fprintf(stderr, "Error reading alias of disconnect in server\n");
         } else {
             strcpy(client_data.alias, buffer);
         }
-
+        //call function to disconnect client, returned 0 if OK, 1 if not registered, 2 if not online, 3 if error
         result = disconnect_user(client_data.alias);
         sprintf(buffer, "%d", result);
         if (sendMessage(socket_fd, buffer, strlen(buffer)+1) == -1) {
@@ -162,35 +174,38 @@ void treat_message(void *new_socket_fd) {
     } else if (strcmp(operation, "SEND") == 0) {
         struct message_data message_data;
         char receiver_alias[20];
+        //read sender alias
         if (readLine(socket_fd, buffer, 256) == -1) {
             fprintf(stderr, "Error reading alias of send in server\n");
         } else {
             strcpy(message_data.sender, buffer);
         }
+        //read receiver alias
         if (readLine(socket_fd, buffer, 256) == -1) {
             fprintf(stderr, "Error reading receiver of send in server\n");
         } else {
             strcpy(receiver_alias, buffer);
         }
+        //read message
         if (readLine(socket_fd, buffer, 256) == -1) {
             fprintf(stderr, "Error reading message of send in server\n");
         } else {
             strcpy(message_data.message, buffer);
         }
-
+        //calls function to save message, returned 0 if OK, 1 if not registered, 2 if not online, 3 if error
         result = save_message(receiver_alias, &message_data);
         sprintf(buffer, "%d", result);
         if (sendMessage(socket_fd, buffer, strlen(buffer)+1) == -1) {
             fprintf(stderr, "Error sending SEND result in server\n");
         }
-
+        //if message was saved, send message identifier to client
         if (result == 0) {
             sprintf(buffer, "%d", message_data.identifier);
             if (sendMessage(socket_fd, buffer, strlen(buffer)+1) == -1) {
                 fprintf(stderr, "Error sending SEND message identifier in server\n");
             }
         }
-
+        //Every time saved a message, try to send it to the receiver (the function will check if he is online)
         int sending = send_message(receiver_alias);
         if (sending == -1) {
             fprintf(stderr, "Error sending message in server\n");
@@ -203,27 +218,29 @@ void treat_message(void *new_socket_fd) {
         char alias[20];
         char user_names[20][20];
         int number_connected_users = 0;
-
+        //read client alias
         if (readLine(socket_fd, buffer, 256) == -1) {
             fprintf(stderr, "Error reading alias of send in server\n");
         } else {
             strcpy(alias, buffer);
         }
-
+        //calls function to get connected users, returned 0 if OK, 1 if current client not online, 2 if current client not registered or other case
         result = connected_users(alias, user_names, &number_connected_users);
         sprintf(buffer, "%d", result);
         if (sendMessage(socket_fd, buffer, strlen(buffer)+1) == -1) {
             fprintf(stderr, "Error sending SEND result in server\n");
         }
-
-        sprintf(buffer, "%d", number_connected_users);
-        if (sendMessage(socket_fd, buffer, strlen(buffer)+1) == -1) {
-            fprintf(stderr, "Error sending number of connected users in server\n");
-        }
-        for (int i = 0; i < number_connected_users; i++) {
-            sprintf(buffer, "%s", user_names[i]);
+        //if result is 0, send number of connected users and their alias
+        if (result == 0) {
+            sprintf(buffer, "%d", number_connected_users);
             if (sendMessage(socket_fd, buffer, strlen(buffer)+1) == -1) {
-                fprintf(stderr, "Error sending connected user alias in server\n");
+                fprintf(stderr, "Error sending number of connected users in server\n");
+            }
+            for (int i = 0; i < number_connected_users; i++) {
+                sprintf(buffer, "%s", user_names[i]);
+                if (sendMessage(socket_fd, buffer, strlen(buffer)+1) == -1) {
+                    fprintf(stderr, "Error sending connected user alias in server\n");
+                }
             }
         }
     } else {
